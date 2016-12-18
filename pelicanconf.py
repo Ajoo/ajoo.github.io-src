@@ -22,8 +22,7 @@ AUTHOR_FEED_RSS = None
 # Blogroll
 LINKS = (('kaggle', 'https://www.kaggle.com'),
          ('Python.org', 'http://python.org/'),
-         ('Pelican', 'http://getpelican.com/'),
-         ('You can modify those links in your config file', '#'),)
+         ('Pelican', 'http://getpelican.com/'),)
 
 # Social widget
 SOCIAL = (('github', 'https://github.com/Ajoo'),)
