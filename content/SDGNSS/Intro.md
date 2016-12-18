@@ -10,7 +10,7 @@ Since my main background is in Guidance, Navigation and Control (and I'm a perso
 
 My particular goals for this project are therefore:
 
-1. To put my knowledge of GNSS, telecomunications and DSP to work in a practical setting and keep me from getting rusty;
+1. To put my knowledge of GNSS, telecommunications and DSP to work in a practical setting and keep me from getting rusty;
 2. To fill in the blanks in my knowledge of GNSS receivers' inner workings;
 3. To learn about new software libraries and tools, in particular those concerning real time digital signal processing;
 4. To improve my communication and documentation skills.
@@ -18,7 +18,7 @@ My particular goals for this project are therefore:
 
 # Materials
 
-There are only two components (three if you're counting a decent computer/laptop) required for this project. One is an active GPS Antenna in order to be able to receive GPS signals in the L1 band (1575.42 MHz center frequency) and the other is a Software Defined Radio (SDR) which is responsible for delivering your computer the digital samples of these signals shifted to baseband.
+There are only two components (three if you're counting a decent computer/laptop) required for this project. One is an active GPS Antenna in order to be able to receive GPS signals in the L1 band (1575.42 MHz center frequency) and the other is a Software Defined Radio (SDR) which is responsible for delivering to your computer the digital samples of these signals shifted to baseband.
 
 I will go into further detail into the hardware in my next blog post so don't worry if you don't understand what this is for just yet. This section is only meant to give you an idea of what you'll need and the costs associated. The particular choices I made are:
 
