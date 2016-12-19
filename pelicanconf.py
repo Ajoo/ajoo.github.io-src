@@ -28,7 +28,8 @@ LINKS = (('kaggle', 'https://www.kaggle.com'),
          ('Pelican', 'http://getpelican.com/'),)
 
 # Social widget
-SOCIAL = (('github', 'https://github.com/Ajoo'),)
+SOCIAL = (('email', 'mailto:ajoo@outlook.pt'),
+		  ('github', 'https://github.com/Ajoo'),)
 
 DEFAULT_PAGINATION = 10
 
