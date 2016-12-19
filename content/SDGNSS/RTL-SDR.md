@@ -32,5 +32,5 @@ My next post will give a brief overview of the GPS system and sampling GPS L1 si
 
 * [rtl-sdr](http://www.rtl-sdr.com/)
 * [Osmocom rtl-sdr wiki](http://sdr.osmocom.org/trac/wiki/rtl-sdr)
-* [RTL-SDR subreddit](https://www.reddit.com/r/RTLSDR/)
+* [RTL-SDR subreddit](https://www.reddit.com/r/RTLSDR/) A subreddit dedicated to RTL-SDR. Make sure to check their wiki which is filled with useful information.
 * [rtlsdr Community Wiki](http://rtlsdr.org/)

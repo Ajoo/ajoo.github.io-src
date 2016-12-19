@@ -27,7 +27,7 @@ I will go into further detail into the hardware in my next blog post so don't wo
 
 # Existing Software Libraries and Target Audience for These Blog Posts
 
-Software based GPS/GNSS receivers are hardly uncharted waters. There are full fledged software libraries meant to accomplish what this little project of mine set out to do. Below is a list of those I'm aware of:
+Software based GNSS receivers are hardly uncharted waters. There are full fledged software libraries meant to accomplish what this little project of mine set out to do. Below is a list of those I'm aware of:
 
 
 * [gnss-sdrlib](https://github.com/taroz/GNSS-SDRLIB) An open source GNSS Software Defined Radio Library with nice GUI elements written in C and C++
