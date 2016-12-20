@@ -21,4 +21,4 @@ DELETE_OUTPUT_DIRECTORY = False
 # Following items are often useful when publishing
 
 DISQUS_SITENAME = "ajoo-blog"
-#GOOGLE_ANALYTICS = ""
+GOOGLE_ANALYTICS = "UA-89270740-1"

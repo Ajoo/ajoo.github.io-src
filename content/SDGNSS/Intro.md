@@ -25,6 +25,10 @@ I will go into further detail into the hardware in my next blog post so don't wo
 * [RTL-SDR Blog USB Dongle](https://www.amazon.com/RTL-SDR-Blog-RTL2832U-Software-Telescopic/dp/B011HVUEME/ref=lp_10230687011_1_1?srs=10230687011&ie=UTF8&qid=1482078660&sr=8-1) ($26) I chose this over other generic USB DVB-T TV dongles because it has a software enabled bias-T which allows me to power an active antenna without additional hardware or soldering mods. It also has other nice enhancements over regular dongles for use in Software Defined Radio. You could also get the version without the antennas which comes out cheaper ($20) since we're mostly interested in using a GPS antenna.
 * [GPS Active Antenna](https://www.amazon.com/Waterproof-Active-Antenna-28dB-Gain/dp/B00LXRQY9A/ref=lp_10008493011_1_1?srs=10008493011&ie=UTF8&qid=1482079461&sr=8-1) ($15) Any active GPS antenna should do, there are plenty available at Amazon and other specialized sellers.
 
+Below is a picture I took of the USB dongle and the GPS antenna with a 2 Euro coin for scale:
+
+![RTL Dongle and GPS Antenna]({filename}/images/Rtl_Dongle_and_GPS_Antenna.jpg)
+
 # Existing Software Libraries and Target Audience for These Blog Posts
 
 Software based GNSS receivers are hardly uncharted waters. There are full fledged software libraries meant to accomplish what this little project of mine set out to do. Below is a list of those I'm aware of:

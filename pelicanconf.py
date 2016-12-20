@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 AUTHOR = 'Ajoo'
 SITENAME = 'Wintermute Dev Logs'
 SITEURL = ''
-GITHUB_URL = 'https://github.com/Ajoo/ajoo.github.io-src'
+#GITHUB_URL = 'https://github.com/Ajoo/ajoo.github.io-src'
 
 TIMEZONE = 'Europe/London'
 DEFAULT_LANG = 'English'
@@ -13,6 +13,7 @@ DEFAULT_LANG = 'English'
 PATH = 'content'
 
 DEFAULT_CATEGORY = 'General'
+STATIC_PATHS = ['images']
 TYPOGRIFY = True
 
 # Feed generation is usually not desired when developing
@@ -24,8 +25,7 @@ AUTHOR_FEED_RSS = None
 
 # Blogroll
 LINKS = (('kaggle', 'https://www.kaggle.com'),
-         ('Python.org', 'http://python.org/'),
-         ('Pelican', 'http://getpelican.com/'),)
+         ('Python.org', 'http://python.org/'))
 
 # Social widget
 SOCIAL = (('email', 'mailto:ajoo@outlook.pt'),
