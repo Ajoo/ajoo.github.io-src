@@ -2,6 +2,11 @@
 # -*- coding: utf-8 -*- #
 from __future__ import unicode_literals
 
+import os
+import sys
+sys.path.append(os.curdir)
+from themeconf import *
+
 AUTHOR = 'Ajoo'
 SITENAME = 'Wintermute Dev Logs'
 SITEURL = ''
@@ -15,6 +20,7 @@ PATH = 'content'
 DEFAULT_CATEGORY = 'General'
 STATIC_PATHS = ['images']
 TYPOGRIFY = True
+#THEME = 'themes/pelican-blueidea'
 
 # Feed generation is usually not desired when developing
 FEED_ALL_ATOM = None
@@ -22,10 +28,6 @@ CATEGORY_FEED_ATOM = None
 TRANSLATION_FEED_ATOM = None
 AUTHOR_FEED_ATOM = None
 AUTHOR_FEED_RSS = None
-
-# Blogroll
-LINKS = (('kaggle', 'https://www.kaggle.com'),
-         ('Python.org', 'http://python.org/'))
 
 # Social widget
 SOCIAL = (('email', 'mailto:ajoo@outlook.pt'),

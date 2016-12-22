@@ -4,7 +4,7 @@ Tags: GNSS, RTL-SDR
 Summary: A short introduction to my Software Defined GNSS project
 Status: published
 
-When I first heard about Software Defined Radios (SDR) I was instantly interested. The ability to probe the electromagnetic spectrum around me and decode the ubiquitous signals being transmitted seemed to open a door to new and interesting experiments. I loved Digital Signal Processing (DSP) when I was in college (still do) and this was exactly what I was looking for to put it in practice. I started looking for a project to sink my teeth in that went besides using established software and a cheap SDR to decode well known AM, FM and ADS-B signals.
+When I first heard about Software Defined Radios (SDR) I was instantly hooked. The ability to probe the electromagnetic spectrum around me and decode the ubiquitous signals being transmitted seemed to open a door to new and interesting experiments. I loved Digital Signal Processing (DSP) when I was in college (still do) and this was exactly what I was looking for to put it in practice. I started looking for a project to sink my teeth in that went besides using established software and a cheap SDR to decode well known AM, FM and ADS-B signals.
 
 Since my main background is in Guidance, Navigation and Control (and I'm a person walking this Earth in 2016) I've made use of GPS before and I'm familiar to some extent with its inner workings from a course in Global Navigation Satellite Systems (GNSS) I attended in college. I've always felt however that my knowledge of this system is not as deep as I want it to be, particularly regarding the receiver side of things. I think it's therefore appropriate that my first foray into the exciting world of SDR be the implementation of a GPS/GNSS receiver in software. I intend to take this as far as I can, from measuring GPS L1 signals to computing a full navigation solution of position and velocity, learning as much as I can along the way and sharing it with any interested readers.
 
@@ -14,7 +14,7 @@ My particular goals for this project are therefore:
 2. To fill in the blanks in my knowledge of GNSS receivers' inner workings;
 3. To learn about new software libraries and tools, in particular those concerning real time digital signal processing;
 4. To improve my communication and documentation skills.
-
+#
 
 # Materials
 
@@ -22,7 +22,7 @@ There are only two components (three if you're counting a decent computer/laptop
 
 I will go into further detail into the hardware in my next blog post so don't worry if you don't understand what this is for just yet. This section is only meant to give you an idea of what you'll need and the costs associated. The particular choices I made are:
 
-* [RTL-SDR Blog USB Dongle](https://www.amazon.com/RTL-SDR-Blog-RTL2832U-Software-Telescopic/dp/B011HVUEME/ref=lp_10230687011_1_1?srs=10230687011&ie=UTF8&qid=1482078660&sr=8-1) ($26) I chose this over other generic USB DVB-T TV dongles because it has a software enabled bias-T which allows me to power an active antenna without additional hardware or soldering mods. It also has other nice enhancements over regular dongles for use in Software Defined Radio. You could also get the version without the antennas which comes out cheaper ($20) since we're mostly interested in using a GPS antenna.
+* [RTL-SDR Blog USB Dongle](https://www.amazon.com/RTL-SDR-Blog-RTL2832U-Software-Telescopic/dp/B011HVUEME/ref=lp_10230687011_1_1?srs=10230687011&ie=UTF8&qid=1482078660&sr=8-1) ($26) I chose this over other generic USB DVB-T TV dongles because it has a software enabled bias-T which allows me to power an active antenna without additional hardware or soldering mods. It also has other nice enhancements over regular dongles for use in Software Defined Radio and an SMA antenna connector instead of the more common MCX which is great since we won't need additional parts to plug in our GPS antenna. You could also get the version without the two telescopic antennas which comes out cheaper ($20) since we're mostly interested in using a GPS antenna.
 * [GPS Active Antenna](https://www.amazon.com/Waterproof-Active-Antenna-28dB-Gain/dp/B00LXRQY9A/ref=lp_10008493011_1_1?srs=10008493011&ie=UTF8&qid=1482079461&sr=8-1) ($15) Any active GPS antenna should do, there are plenty available at Amazon and other specialized sellers.
 
 Below is a picture I took of the USB dongle and the GPS antenna with a 2 Euro coin for scale:

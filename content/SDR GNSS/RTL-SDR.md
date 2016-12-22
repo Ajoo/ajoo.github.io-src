@@ -28,6 +28,26 @@ The folks at the rtl-sdr blog have provided a [quickstart guide](http://www.rtl-
 
 Pretty much all software that interfaces with the RTL-SDR makes use of this library. If you followed the quickstart guide I linked earlier and downloaded SDR#, one of the things that batch-file you ran did was download this library and copy the 32 bit version of rtlsdr.dll to the sdrsharp folder. Sadly it threw the rest of it away so you'll have to go ahead to the [Osmocom rtl-sdr wiki](http://sdr.osmocom.org/trac/wiki/rtl-sdr) and download it again if you need the 64 bit version and the command line utilities that come packaged with it. You can either build it from source or grab the [pre-built windows version](http://sdr.osmocom.org/trac/attachment/wiki/rtl-sdr/RelWithDebInfo.zip).
 
+### rtl_fm
+
+[rtl_fm](http://kmkeen.com/rtl-demod-guide/)
+
+
+### SoX
+
+sox -r 32k -t raw -e s -b 16 -c 1 -V1 COMERCIAL.RAW -t waveaudio
+
+options pertaining to input:
+* -r 32k : Sample rate 32 kHz
+* -t raw : input file type is type raw (headerless)
+* -e signed : audio encoding is signed integers
+* -b 16 : 16 bits per encoded sample
+* -c 1 : 1 audio channel
+* -V1 : verbosity level 1
+
+options pertaining to output:
+* -t waveaudio : audio output
+
 ## pyrtlsdr
 
 ## GNU Radio
