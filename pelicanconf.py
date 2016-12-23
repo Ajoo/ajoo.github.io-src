@@ -29,9 +29,12 @@ TRANSLATION_FEED_ATOM = None
 AUTHOR_FEED_ATOM = None
 AUTHOR_FEED_RSS = None
 
+LINKS = (('email', 'mailto:ajoo@outlook.pt'),
+		  ('kaggle', 'https://www.kaggle.com/ajoo88'))
+
 # Social widget
-SOCIAL = (('email', 'mailto:ajoo@outlook.pt'),
-		  ('github', 'https://github.com/Ajoo'),)
+SOCIAL = (('github', 'https://github.com/Ajoo'),)
+		  
 
 DEFAULT_PAGINATION = 10
 
