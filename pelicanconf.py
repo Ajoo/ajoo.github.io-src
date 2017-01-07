@@ -20,6 +20,8 @@ PATH = 'content'
 DEFAULT_CATEGORY = 'General'
 STATIC_PATHS = ['images']
 TYPOGRIFY = True
+PLUGIN_PATHS = ['plugins']
+PLUGINS = ['render_math']
 #THEME = 'themes/pelican-blueidea'
 
 # Feed generation is usually not desired when developing
