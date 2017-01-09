@@ -1,6 +1,7 @@
 Title: Intro to RTL-SDR
 Date: 2016-12-18 13:00
-Tags: RTL-SDR
+Category: SDR
+Tags: RTL-SDR, Python, DSP
 Summary: A summary of what I've learned about RTL-SDR so far. From the working principles of the USB dongles to the software I intend to use to capture and process the data for future projects.
 Status: draft
 
@@ -18,7 +19,7 @@ Intro goes here
 
 # Analog Communications 101
 
-Communication systems often involte transmiting a message $m(t)$ through a pass-band channel, i.e., a channel where only a limited range of frequencies can be used. A good example is raio where, for instance, comercial FM is usually restricted to between 85 and 108 MHz. Given that the message we're interested in transmiting often has support in another range of frequencies, as is the case of raw audio signals in the human hearing range ([20 Hz; 20 kHz]), the signal must first be shifted in frequency in order to satisfy the requirements of the particular channel of comunication.
+Communication systems often involve transmiting a message $m(t)$ through a pass-band channel, i.e., a channel where only a limited range of frequencies can be used. A good example is comercial FM radio transmitions, usually restricted to a frequency band between 85 and 108 MHz which must accomodate multiple stations, each one being allocated a <200 kHZ band. Given that the message we're interested in transmiting often has support in a different range of frequencies, as is the case of raw audio signals in the human hearing range ([20 Hz; 20 kHz]), the signal must first be shifted in frequency in order to satisfy the requirements of the particular channel of comunication.
 
 This is accomplished by modulation whereby one characteristic of a carrier wave (usually sinusoid like $A\cos(\omega_c t)$) will be made to vary according to the *modulating signal*: $m(t)$ (also called the message) producing a *modulated signal*: $s(t)=B(t)\cos[\omega_c t + \theta (t)]$. There are two main forms of analog modulation:
 
@@ -47,11 +48,17 @@ $$m(t)\cos(2\pi f_c t)\stackrel{\mathrm{\mathcal{F}}}{\longleftrightarrow}\frac{
 
 # Software Defined Radio
 
-What is software defined radio
+Many forms of radio communication systems were designed with analog technology in mind. Software Defined Radio (**SDR**) is a communication system where part of the traditionally analog signal processing, accomplished by means of analog electronic circuits is replaced by digital signal processing, accomplished my means of Analog to Digital Conversion/Digital to Analog Conversion (ADC/DCA) and general purpose computers running DSP software.
+
+By replacing hardware components with software, through inserting an ADC/DCA as far upstream the signal flow as possible and processing the digital signal instead, very flexible and general purpose systems can be realized since software is much easier to change than hardware components. Ideally, one would place an ADC or DCA directly at the antenna for maximum flexibility  but this is not practical and SDR systems tipically include a flexible [RF front end](https://en.wikipedia.org/wiki/RF_front_end) before sampling as in the high level diagram below depicting the typical SDR system:
+
+![Conceptual SDR system]({filename}/images/SDR_system.svg)
+
+Note that the term Software Defined Radio denotes the whole communication system including the antenna, any specialized hardware and the computer/embedded system running the DSP. In the following however we'll (ab)use it by equating it with the hardware that is used to deliver the digital samples to a personal computer.
 
 # A Cheap SDR
 
-There are many commercially available SDRs, both receiver only (RX) and transceiver (RX/TX), but they're in general rather expensive (>€100 for RX and >€300 for RX/TX). This is where DVB-T TV tuner USB dongles based on the RTL2832U chipset come into play. As the name indicates, these cheap dongles (~€20) were meant for receiving DVB-T TV but hacked drivers from [Osmocom](http://sdr.osmocom.org/trac/wiki/rtl-sdr) are able to turn them into wideband receiver only SDRs. This cheap SDR is therefore tipically known as the RTL-SDR:
+There are many general purpose commercially available SDRs, both receiver only and transceiver, but they're rather expensive in general (>€100 for RX and >€300 for RX/TX). This is where DVB-T TV tuner USB dongles based on the RTL2832U chipset come into play. As the name indicates, these cheap dongles (~€20) were meant for receiving DVB-T TV but hacked drivers from [Osmocom](http://sdr.osmocom.org/trac/wiki/rtl-sdr) are able to turn them into wideband receiver only SDRs. This cheap SDR is therefore tipically known as the **RTL-SDR**:
 
 ![RTL dongles]({filename}/images/RTL_dongles.jpg)
 
@@ -67,7 +74,7 @@ Mainly used with three different kinds of tuners, the discontinued (and therefor
 
 # The Software
 
-In this section I'll talk about the software I'm going to be using for RTL SDR projects. To showcase all the tools and make sure the concepts sink in I'll be using all of them to  demodulate an FM signal. I'll start with specialized tools that sample the RTL SDR and demodulate FM signals themselves (**SDR#** and **rtl_fm**) and then move on to those that simply capture the IQ samples from the RTL-SDR (**rtl_sdr** and **pyrtlsdr**). Since python will be my language of choice for anything RTL SDR related, I'll demodulate the FM signals directly from IQ samples using only numpy and scipy. I'm planing to, in a later post, use GNU radio to do the same in real time as a way to get aqquainted with the software.
+In this section I'll introduce the software I'm going to be using for RTL SDR projects. To showcase all the tools and make sure the concepts sink in I'll be using all of them to  demodulate an FM signal. I'll start with specialized tools that sample the RTL SDR and demodulate FM signals themselves (**SDR#** and **rtl_fm**) and then move on to those that simply capture the IQ samples from the RTL-SDR (**rtl_sdr** and **pyrtlsdr**). Since python will be my language of choice for anything RTL SDR related, I'll demodulate the FM signals directly from IQ samples using only numpy and scipy. I'm planing to, in a later post, use GNU radio to do the same in real time as a way to get aqquainted with the software.
 
 ## SDR# #
 
@@ -274,3 +281,10 @@ My next posts will be an introduction to GNU radio where I'll demodulate FM sign
 * [Osmocom rtl-sdr wiki](http://sdr.osmocom.org/trac/wiki/rtl-sdr)
 * [RTL-SDR subreddit](https://www.reddit.com/r/RTLSDR/) A subreddit dedicated to RTL-SDR. Make sure to check their wiki which is filled with useful information.
 * [rtlsdr Community Wiki](http://rtlsdr.org/)
+* [superkuh's website](http://superkuh.com/rtlsdr.html) An absolute bible when it comes to the internals of RTL-SDR USB dongles. Tons of useful information, links to datasheets, schematics, etc... 
+
+# Educational Links:
+
+* [University of Colorado's Communications Lab](http://www.eas.uccs.edu/~mwickert/ece4670/) Make sure to check out their lab assignments, particularly Lab 6 which this blog post draws inspiration from;
+* [Stanford's Analog and Digital Communication Systems 2014 course](http://web.stanford.edu/class/ee179/) Again, make sure to check out the lab assignments with lots of RTL-SDR materials;
+
