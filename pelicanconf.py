@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 import os
 import sys
 sys.path.append(os.curdir)
+
 from themeconf import *
 
 AUTHOR = 'Ajoo'
@@ -21,8 +22,7 @@ DEFAULT_CATEGORY = 'General'
 STATIC_PATHS = ['images']
 TYPOGRIFY = True
 PLUGIN_PATHS = ['plugins']
-PLUGINS = ['render_math']
-#THEME = 'themes/pelican-blueidea'
+PLUGINS = ['render_math', 'liquid_tags.img', 'liquid_tags.audio', 'liquid_tags.include_code']
 
 # Feed generation is usually not desired when developing
 FEED_ALL_ATOM = None
