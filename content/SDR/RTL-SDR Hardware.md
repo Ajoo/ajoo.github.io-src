@@ -134,7 +134,7 @@ $$\frac{\text{d}\angle s_b(t)}{\text{d}t} = 2\pi f_\Delta m(t)$$
 
 Many forms of radio communication systems were designed with analog technology in mind. Software Defined Radio (**SDR**) is a communication system where part of the traditionally analog signal processing, accomplished by means of analog electronic circuits is replaced by digital signal processing (DSP, accomplished my means of analog to digital conversion/digital to analog conversion (ADC/DAC) and any form of computers or embedded system running DSP software.
 
-By replacing hardware components with software, through inserting an ADC/DAC as far upstream the signal flow as possible and processing the digital signal instead, very flexible and general purpose systems can be realized since software is much easier to change than hardware components. Ideally, one would place an ADC or DAC directly at the antenna for maximum flexibility  but this is not practical and SDR systems typically include a flexible [radio frequency (RF) front-end](https://en.wikipedia.org/wiki/RF_front_end) before sampling as in the high level diagram below depicting the typical SDR system:
+By replacing hardware components with software, through inserting an ADC/DAC as far upstream the signal flow as possible and processing the digital signal instead, very flexible and general purpose systems can be realized since software is much easier to change than hardware components. Ideally, one would place an ADC or DAC directly at the antenna for maximum flexibility  but this is not practical and SDR systems typically include a flexible [radio frequency (RF) front-end](https://en.wikipedia.org/wiki/RF_front_end) before sampling as in the conceptual diagram below depicting the typical SDR system based on the one that can be found on [Wikipedia's SDR Page](https://en.wikipedia.org/wiki/Software-defined_radio):
 
 ![Conceptual SDR system]({filename}/images/SDR_system.svg)
 
@@ -152,7 +152,10 @@ The dongle that you see at the bottom is the one sold by the [RTL-SDR blog](http
 
 ## The innards of RTL2832U based DVB-T TV USB dongles
 
-{% sourced_fig {filename}/images/RTL_dongle_inside.png 'RTL dongle inside' 'RTL-SDR blog dongle opened up.' http://www.rtl-sdr.com/buy-rtl-sdr-dvb-t-dongles/ %}
+{% sourced_fig {filename}/images/RTL_dongle_inside.png 
+'RTL dongle inside'
+'RTL-SDR blog USB dongle opened up.'
+http://www.rtl-sdr.com/buy-rtl-sdr-dvb-t-dongles/ %}
 
 The overall architecture of RTL-SDR dongles is based on a [superheterodyne receiver](https://en.wikipedia.org/wiki/Superheterodyne_receiver) which is a popular design for receivers that must be able to process signals at a wide range of user-selected frequencies, isolating them from other signals and amplifying them. Examples are many conventional AM/FM radio receivers where the user selects a channel by tuning the radio to it's carrier wave frequency.
 
@@ -164,7 +167,7 @@ This downconversion is achieved by mixing with a sinusoidal wave of the appropri
 
 ![IF Spectrum]({filename}/images/IF_spectrum.svg)
 
-An initial radio frequency (RF) filtering stage is therefore useful in order to filter out any signal or noise at this image frequency. This RF filter often has a variable center frequency whose tuning is shared with the LO. Another common component of the RF section of the receiver is an amplifier, often called low noise amplifier (LNA).
+An initial radio frequency (RF) filtering stage is therefore useful in order to filter out any signal or noise at this image frequency. This RF filter often has a variable center frequency whose tuning is shared with the LO. Another common component of the RF section of the receiver is an amplifier, often called a low noise amplifier (LNA).
 
 While traditionally the intermediate frequency signal processing section was analog, lately, due to the ubiquity of Integrated Circuits and the availability of micro-processors in many devices (such as cell-phones) the trend has been to handle some of these tasks digitally. In this case, superheterodyne architectures are useful as they downconvert a passband signal that is too impratical to sample (due to their high frequency requiring very high sample rates) into a lower frequency passband signal that is more manageable to sample without aliasing.
 
@@ -179,7 +182,7 @@ The following sections will go into details about the function of each of these 
 
 ### Tuner
 
-There are two main families of tuner chips of interest for SDR applications, the now discontinued Elonics E4000 and the Raphael Micro R820T/R820T2 radio tuner which will be the focus of this discussion. The differences between the T and T2 are small, essentially amounting to slightly better sensitivity[¹] for practical purposes.
+There are two main families of tuner chips of interest for SDR applications, the now discontinued Elonics E4000 and the Raphael Micro R820T/R820T2 radio tuner which will be the focus of this discussion. The differences between the T and the T2 are small, essentially amounting to slightly better sensitivity[¹] for practical purposes.
 
 The [datasheet](http://superkuh.com/gnuradio/R820T_datasheet-Non_R-20111130_unlocked.pdf) for the R820T was leaked online so a lot is known about the inner workings of this chip. A [register description](http://superkuh.com/R820T2_Register_Description.pdf) for the R820T2 is also available which details the parameters of the tuner that can be set from outside. A high level simplified diagram based on the one found in the datasheet is depicted next:
 
@@ -187,7 +190,7 @@ The [datasheet](http://superkuh.com/gnuradio/R820T_datasheet-Non_R-20111130_unlo
 
 The signal coming from the antenna connector first goes through a low noise amplifier (LNA) and is then filtered by a bandpass filter and an image rejection filter. According to the datasheet, the image rejection is 65 dBc.
 
-A fractional PLL based frequency synthesizer generates the LO that is mixed with this filtered signal in order to downconvert it to a low intermediate frequency (either 3.57 MHz or 4.57 MHz for R820T dongles[¹]). The frequency range that the RTL-SDR is able to tune to is determined by the range of frequencies that the frequency synthesizer inside the chip can generate. The R820T’s official range found in the data sheet is [42; 1002] MHz but the RTL-SDR community have determined that the real range is [24; 1766] MHz[¹] with a tuning resolution of 1 Hz.
+A fractional PLL based frequency synthesizer generates the LO that is mixed with this filtered signal in order to downconvert it to a low intermediate frequency (3.57 MHz and 4.57 MHz are typical values for R820T dongles[¹]). The frequency range that the RTL-SDR is able to tune to is determined by the range of frequencies that the frequency synthesizer inside the chip can generate. The R820T’s official range found in the data sheet is [42; 1002] MHz but the RTL-SDR community have determined that the real range is [24; 1766] MHz[¹] with a tuning resolution of 1 Hz.
 In fact, using an experimental set of [drivers](https://github.com/mutability/rtl-sdr/) this frequency range has been extended as far as [13; 1864] MHz with the upper limit having some variability depending on the dongle used.
 
 Finally once at the intermediate frequency the signal is again filtered and goes through a variable gain amplifier (VGA). The IF filter is usually more selective than the RF since that is the point of superheterodyne architectures. In the case of the R820T it is composed of a low-pass filter and a high-pass one that can be configured to have a bandwidth as low as 300 kHz[²](http://lists.osmocom.org/pipermail/osmocom-sdr/2015-February/000019.html). Its "standard values" however are either 6, 7 or 8 MHz since these are the bandwidths used by DVB-T signals. 
