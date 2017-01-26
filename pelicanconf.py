@@ -22,7 +22,7 @@ DEFAULT_CATEGORY = 'General'
 STATIC_PATHS = ['images']
 TYPOGRIFY = True
 PLUGIN_PATHS = ['plugins']
-PLUGINS = ['render_math', 'liquid_tags.img', 'liquid_tags.audio', 'liquid_tags.include_code']
+PLUGINS = ['render_math', 'liquid_tags.img', 'liquid_tags.fig', 'liquid_tags.audio', 'liquid_tags.include_code']
 
 # Feed generation is usually not desired when developing
 FEED_ALL_ATOM = None
