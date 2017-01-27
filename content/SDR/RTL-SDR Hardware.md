@@ -5,13 +5,19 @@ Tags: RTL-SDR, DSP
 Summary: A summary of what I've learned about RTL-SDR so far. From the working principles of the USB dongles to the software I intend to use to capture and process the data for future projects.
 Status: published
 
+{% sourced_fig
+https://c2.staticflickr.com/4/3546/4599500082_93203ec261.jpg
+"K.W. Vanguard radio"
+"A vintage K.W. Vanguard radio. An iconic piece of equipment from a previous era of amateur radio enthusiasts. Image by Derek via"
+https://www.flickr.com/photos/xenoc/4599500082/ Flickr %}
 
+The purpose of this two-part blog post is to introduce a piece of equipment which is quickly becoming a centerpiece of the modern radio enthusiast's toolbox. A cheap and powerful device that allows one to digitally sample the electromagnetic spectrum at a wide range of frequencies and is breathing new life into the amateur radio (HAM) community.
 
 Initially this two-part introduction to RTL-SDR was meant as a single blog post. I intended to first go through the theory and working principles of the hardware and then move on to the software that I plan to use in future RTL-SDR projects. Finally, I intended to use this software to implement a simple FM demodulator in order to illustrate my points through a practical application.
 
 The more I researched this topic however, the more things I found that I wanted to write about here and this post eventually grew to be too lengthy for a single serving. I wanted this first article to be quite in depth, especially regarding the inner workings of RTL-SDR dongles because I wanted to have a single point to refer back to on this matter, both for my sake and that of any readers out there.
 
-As such, in this first part of my introduction to RTL-SDR I'll go over some basic principles of telecommunications that I feel are essential in order to understand the working principles of SDR hardware. I will then describe the compoenents that make up the RTL-SDR and explain their functioning. 
+As such, in this first part of my introduction to RTL-SDR I'll go over some basic principles of telecommunications that I feel are essential in order to understand the working principles of SDR hardware. I will then describe the components that make up the RTL-SDR and explain their functioning. 
 
 This means that this first part is mostly theoretical but I hope that doesn't deter anyone from following along. If you're not all that interested in understanding how everything works I guess that skipping the Innards of RTL-SDR dongles section should still provide a minimum working knowledge of RTL-SDR going forward. You can always refer back to this post if you need a more in depth understanding further along the path...
 
@@ -66,11 +72,11 @@ The result of our naive demodulation scheme is then:
 
 $$s(t)\cos(2\pi f_ct) = \frac{A}{2}m(t)\{[1+\cos(4\pi f_ct)]\cos(\phi)-\sin(4\pi f_ct)\sin(\phi)\}$$
 
-This is effectivelly $\frac{A}{2}m(t)\cos(\phi)$ + a couple terms at frequency $2f_c$ which are the result of this second mixing. Low pass filtering this signal to get rid of these higher frequency components then yields the desired result with one caveat: the constant factor $\cos(\phi)$ which in the worst case is 0 when the two waves are in quadrature with each other.
+This is effectively $\frac{A}{2}m(t)\cos(\phi)$ + a couple terms at frequency $2f_c$ which are the result of this second mixing. Low pass filtering this signal to get rid of these higher frequency components then yields the desired result with one caveat: the constant factor $\cos(\phi)$ which in the worst case is 0 when the two waves are in quadrature with each other.
 
 One way to get around this scheme's limitation is mixing the received signal not only with a locally generated sinusoidal wave $\cos(2\pi f_ct)$ but also with a second sinusoid shifted 90º in phase: $-\sin(2\pi f_ct)$. After low pass-filtering this results in:
 $$s_b(t)\doteq h_{LP}(t)*s(t)\begin{bmatrix}\cos(2\pi f_ct) \\-\sin(2\pi f_ct) \end{bmatrix}=\frac{A}{2}m(t)\begin{bmatrix}\cos(\phi) \\ \sin(\phi) \end{bmatrix}$$
-And since the sine and cosine can't both be 0 we can always recover our message. An elegant way of doing that is by taking the Euclidean norm of the vector which gets rid of the factor depending on $\phi$ yielding $Am(t)/2$. We can also figure out the original carrier wave's phase from the arctangent of the two compoenents.
+And since the sine and cosine can't both be 0 we can always recover our message. An elegant way of doing that is by taking the Euclidean norm of the vector which gets rid of the factor depending on $\phi$ yielding $Am(t)/2$. We can also figure out the original carrier wave's phase from the arctangent of the two components.
 
 ![AM demodulation diagram]({filename}/images/AM_demodulation_diagram_cb.svg)
 
@@ -85,12 +91,12 @@ One way to retain full information is then to simply multiply the passband signa
 
 ![Complex Baseband Spectrum]({filename}/images/CB_spectrum.svg)
 
-That's exactly what we've done with our modified demodulation except we disguised it by writting it as a real 2-vector instead:
+That's exactly what we've done with our modified demodulation except we disguised it by writing it as a real 2-vector instead:
 $$e^{-j2\pi f_ct}=\cos(2\pi f_ct)-j\sin(2\pi f_ct)\rightarrow \begin{bmatrix}\cos(2\pi f_ct) \\-\sin(2\pi f_ct) \end{bmatrix}$$
 
 In fact, given any passband signal $s(t)$, we can write it in the form:
 $$s(t) = 2s_I(t)\cos(2\pi f_ct)-2s_Q(t)\sin(2\pi f_ct)$$
-which implicitely defines its **I**n phase ($s_I(t)$) and **Q**uadrature ($s_Q(t)$) components (I/Q). It's **complex baseband representation** is then defined as:
+which implicitly defines its **I**n phase ($s_I(t)$) and **Q**uadrature ($s_Q(t)$) components (I/Q). It's **complex baseband representation** is then defined as:
 $$s_b(t) \doteq s_I(t)+js_Q(t)$$
 
 This is a very useful representation of a pass-band signal since it contains the same information as the original signal but is band-limited by a much lower frequency. If $s(t)$ has a bandwidth of W around a frequency $f_c$, then it's band-limited by $f_c+W/2$ and therefore, by Nyquist's theorem, must be sampled at least at $f_s \geq 2f_c+W$. By contrast, $s_b(t)$ is band-limited by $W/2$ and can be sampled and digitally processed at the (usually) much more amenable $f_s \geq W$.
@@ -103,9 +109,9 @@ s(t)& =& \mathrm{Re}[2s_b(t)e^{j2\pi f_ct}]\\\\
 &=& 2\mid s_b(t)\mid\cos[2\pi f_ct+\angle s_b(t)]
 \end{eqnarray*}$$
 
-The last expression makes obvious what we already saw in the previous section about demodulating an AM signal given it's complex baseband representation. That it ammounts to taking it's complex norm: $\mid s_b(t)\mid$ (also called the envelope). Likewise, it's phase $\angle s_b(t)$ gives us all the information necessary to demodulate any angle based modulation.
+The last expression makes obvious what we already saw in the previous section about demodulating an AM signal given it's complex baseband representation. That it amounts to taking it's complex norm: $\mid s_b(t)\mid$ (also called the envelope). Likewise, it's phase $\angle s_b(t)$ gives us all the information necessary to demodulate any angle based modulation.
 
-We can now represent the same diagram depicting how to obtain the complex baseband representation and reconstruct the original passband signal but now in complex notation:
+We can now represent the same diagram depicting how to obtain the complex baseband representation and reconstruct the original passband signal but in complex notation:
 
 ![Complex Baseband]({filename}/images/complex_baseband_complex.svg)
 
@@ -163,20 +169,20 @@ A selective enough filter must be applied to the signal coming from the antenna 
 
 ![Superheterodyne Receiver]({filename}/images/superhet.svg)
 
-This downconversion is achieved by mixing with a sinusoidal wave of the appropriate frequency generated by a local oscillator (LO). When the user selects a frequency $f_c$ to tune to, the LO generates a sine wave at either $f_{LO} = f_c-f_{IF}$ (low-side injection) or $f_{LO} = f_c+f_{IF}$ (high-side injection, note that when using this frequency the spectrum of the resulting signal will be inverted in frequency). A byproduct of this mixing is that both $f_c$ and $f_c\mp 2f_{IF}$ (for low/high side injection respectivelly) get mixed into the intermediate frequency. The first is the frequency of interest and the other is the so called **image frequency**.
+This downconversion is achieved by mixing with a sinusoidal wave of the appropriate frequency generated by a local oscillator (LO). When the user selects a frequency $f_c$ to tune to, the LO generates a sine wave at either $f_{LO} = f_c-f_{IF}$ (low-side injection) or $f_{LO} = f_c+f_{IF}$ (high-side injection, note that when using this frequency the spectrum of the resulting signal will be inverted in frequency). A byproduct of this mixing is that both $f_c$ and $f_c\mp 2f_{IF}$ (for low/high side injection respectively) get mixed into the intermediate frequency. The first is the frequency of interest and the other is the so called **image frequency**.
 
 ![IF Spectrum]({filename}/images/IF_spectrum.svg)
 
 An initial radio frequency (RF) filtering stage is therefore useful in order to filter out any signal or noise at this image frequency. This RF filter often has a variable center frequency whose tuning is shared with the LO. Another common component of the RF section of the receiver is an amplifier, often called a low noise amplifier (LNA).
 
-While traditionally the intermediate frequency signal processing section was analog, lately, due to the ubiquity of Integrated Circuits and the availability of micro-processors in many devices (such as cell-phones) the trend has been to handle some of these tasks digitally. In this case, superheterodyne architectures are useful as they downconvert a passband signal that is too impratical to sample (due to their high frequency requiring very high sample rates) into a lower frequency passband signal that is more manageable to sample without aliasing.
+While traditionally the intermediate frequency signal processing section was analog, lately, due to the ubiquity of integrated circuits and the availability of micro-processors in many devices (such as cell-phones) the trend has been to handle some of these tasks digitally. In this case, superheterodyne architectures are useful as they downconvert a passband signal that is too impractical to sample (due to their high frequency requiring very high sample rates) into a lower frequency passband signal that is more manageable to sample without aliasing.
 
 In the RTL-SDR dongles the signal is sampled at a low intermediate frequency after an analog filtering and amplification stage and further processed digitally. RTL-SDR dongles contain 2 important integrated circuits (ICs) which implement the different functions of the superheterodyne receiver:
 
 * **Tuner**: The RF front-end which implements the analog signal processing part of the receiver and is responsible for the downconversion into the intermediate frequency;
 * **The RTL2832U**: Samples the signal and performs additional digital signal processing tasks such as decimation. Also handles USB control.
 
-The following sections will go into details about the function of each of these important components. Information from these sections is gathered from multiple sources but [superkuh's website](http://superkuh.com/rtlsdr.html) deserves a special mention as it is a veritable treasure cove for anything RTL-SDR related.
+The following sections will go into details about the function of each of these important components. Information from these sections is gathered from multiple sources including the [Osmocom driver's source code](https://github.com/steve-m/librtlsdr). [Superkuh's website](http://superkuh.com/rtlsdr.html) deserves a special mention as it is a veritable treasure cove for anything RTL-SDR related.
 
 [¹]: http://superkuh.com/rtlsdr.html
 
@@ -190,14 +196,16 @@ The [datasheet](http://superkuh.com/gnuradio/R820T_datasheet-Non_R-20111130_unlo
 
 The signal coming from the antenna connector first goes through a low noise amplifier (LNA) and is then filtered by a bandpass filter and an image rejection filter. According to the datasheet, the image rejection is 65 dBc.
 
-A fractional PLL based frequency synthesizer generates the LO that is mixed with this filtered signal in order to downconvert it to a low intermediate frequency (3.57 MHz and 4.57 MHz are typical values for R820T dongles[¹]). The frequency range that the RTL-SDR is able to tune to is determined by the range of frequencies that the frequency synthesizer inside the chip can generate. The R820T’s official range found in the data sheet is [42; 1002] MHz but the RTL-SDR community have determined that the real range is [24; 1766] MHz[¹] with a tuning resolution of 1 Hz.
+A fractional PLL based frequency synthesizer generates the LO that is mixed with this filtered signal in order to downconvert it to a low intermediate frequency. The user controls the local oscillator's frequency directly through the parameters of the frequency synthesizer. This indirectly sets the IF frequency and whether low or high-side injection is used. 3.57 MHz and 4.57 MHz are typical values for the IF of R820T dongles[¹] but it's essentially up to the driver implementation to choose what values to use (subject to the limits imposed by the parameters of the synthesizer and the IF filter). 
+
+The frequency range that the RTL-SDR is able to tune to is determined by the range of frequencies that the frequency synthesizer inside the chip can generate. The R820T’s official range found in the data sheet is [42; 1002] MHz with a tuning resolution of 1 Hz but the generally agreed upon real range is [24; 1766] MHz[¹] as determined by the RTL-SDR community.
 In fact, using an experimental set of [drivers](https://github.com/mutability/rtl-sdr/) this frequency range has been extended as far as [13; 1864] MHz with the upper limit having some variability depending on the dongle used.
 
 Finally once at the intermediate frequency the signal is again filtered and goes through a variable gain amplifier (VGA). The IF filter is usually more selective than the RF since that is the point of superheterodyne architectures. In the case of the R820T it is composed of a low-pass filter and a high-pass one that can be configured to have a bandwidth as low as 300 kHz[²](http://lists.osmocom.org/pipermail/osmocom-sdr/2015-February/000019.html). Its "standard values" however are either 6, 7 or 8 MHz since these are the bandwidths used by DVB-T signals. 
 
 There are overall 3 gains in the tuner that can be controlled via external configuration: the LNA, the mixer and the VGA. These gains can be set manually although their precise values are absent from the datasheet. They can also be set automatically via automatic gain control (AGC) in order to optimize the signal to noise ratio (SNR). The LNA and mixer have a power detector at their outputs which is used to control their respective gains for this purpose. The VGA AGC is actually controlled via an analog input port to the tuner which is connected to a power detector in the RTL2832U.
 
-A note on the E4000 chips is that these use a 0 Hz IF so in effect they're not implementing superheterodyne receivers. This has a notable consequence of producing a DC spike at 0 Hz.
+_A note on the E4000 chips is that these use a 0 Hz IF so in effect they're not implementing superheterodyne receivers. This has a notable consequence of producing a DC spike at 0 Hz._
 
 ### RTL2832U 
 
@@ -209,21 +217,21 @@ The following high-level diagram represents my best understanding of the functio
 
 ![RTL2832U Diagram]({filename}/images/RTL2832U.svg)
 
-Initially, the signal coming out of the tuner is sampled by an 8-bit ADC running at 28.8 MHz. Recall that the IF signal should be, in the worst case, bandlimited by 8.57 MHz (for a 4.57 MHz IF and 8 MHz tuner bandwidth) so no significant aliasing should occur if the IF filter is selective enough. 
+Initially, the signal coming out of the tuner is sampled by an 8-bit ADC running at 28.8 MHz. No significant aliasing should occur for the low IF values supported if the IF filter is selective enough to kill any strong signals outside its bandwidth.
 
-A [digital downconverter](https://en.wikipedia.org/wiki/Digital_down_converter) (DDC) is then responsible for downconverting the digital signal to complex baseband. The process of obtaining the complex baseband representation is the same as for the continuous-time case: mixing with two digital sinusoids in quadrature with each other and low pass filtering. The signal can then be resampled without loss of information since the baseband signal will be bandlimited by a lower frequency as was explained in the previous section on complex baseband representation. External configuration parameters inform the DDC of the IF frequency and whether the spectrum is inverted (if the tuner is high-side injecting).
+A [digital downconverter](https://en.wikipedia.org/wiki/Digital_down_converter) (DDC) is then responsible for downconverting the digital signal to complex baseband. The process of obtaining the complex baseband representation is the same as for the continuous-time case: mixing with two digital sinusoids in quadrature with each other and low pass filtering. The signal can then be resampled without loss of information since the baseband signal will be band-limited by a lower frequency as was explained in the previous section on complex baseband representation. External configuration parameters inform the DDC of the IF frequency and whether the spectrum is inverted (i.e., if the tuner is high-side injecting).
 
 Finally decimation (using a FIR low pass filter and downsampling) is applied in order to reduce the sample rate of the signal to a value in the range [225001; 300000] Hz ∪ [900001; 3200000] Hz. 2.56 MHz is however the generally agreed upon highest safe sample rate where no samples will be dropped by the chip (they may still be dropped by the USB). This decimation is what usually sets the upper limit on the bandwidth of the sampled signal (unless the IF filter bandwidth is specifically chosen as lower than the Nyquist frequency for the sample rate).
 
-The I and Q samples are then delivered through USB as interleaved 8-bit unsigned integers.
+The I and Q complex baseband samples are then delivered through USB as interleaved 8-bit unsigned integers.
 
 
-## A High Level Behavioural Model
+## A High Level Behavioral Model
 
-It is sometimes useful to have a simplified picture in mind of the RTL-SDR's internals. This picture, while not perfectly accurate captures the esential behaviour of the hardware while hiding some of the complexity. One such behavioural level model of the RTL-SDR is presented next, based upon
-[Lab 6](http://www.eas.uccs.edu/~mwickert/ece4670/lecture_notes/Lab6.pdf) from [Stanford's Analog and Digital Communication Systems 2014 course](http://web.stanford.edu/class/ee179/) course:
+It is sometimes useful to have a simplified picture in mind of the RTL-SDR's internals. This picture, while not perfectly accurate captures the essential behavior of the hardware while hiding some of the complexity. One such behavioral level model of the RTL-SDR is presented next, based upon
+[Lab 6](http://www.eas.uccs.edu/~mwickert/ece4670/lecture_notes/Lab6.pdf) from [Stanford's Analog and Digital Communication Systems 2014 course](http://web.stanford.edu/class/ee179/):
 
-![Behavioural Model]({filename}/images/behavioural_model.svg) 
+![Behavioral Model]({filename}/images/behavioural_model.svg) 
 
 In its essence, the RTL-SDR provides us a digital complex baseband representation of the signal at whatever frequency band we tune to. Doing away with the added complexity of the superheterodyne architecture, the RTL-SDR's functioning can be boiled down to:
 
@@ -234,7 +242,7 @@ In its essence, the RTL-SDR provides us a digital complex baseband representatio
 These are the essential steps represented in the diagram. The three essential parameters we are able to vary are:
 
 * The gain values (and possible AGC);
-* The center frequency;
+* The center frequency we're tuning to;
 * The sample rate which can go up to ~2.56 MHz without dropping samples;
 * The bandwidth of the filter which can be chosen anywhere from 300 kHz (making use of the IF filter inside the tuner) up to roughly the Nyquist frequency of the chosen sample rate (where the limiting factor will usually be the decimation filter inside the RTL2832U).
 
