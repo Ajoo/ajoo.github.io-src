@@ -1,5 +1,6 @@
 Title: Intro to RTL-SDR, Part I - Principles and Hardware
 Date: 2017-01-25 18:00
+Modified: 2017-01-26 23:55
 Category: SDR
 Tags: RTL-SDR, DSP
 Summary: A summary of what I've learned about RTL-SDR so far. From the working principles of the USB dongles to the software I intend to use to capture and process the data for future projects.

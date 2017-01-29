@@ -5,44 +5,60 @@ Tags: RTL-SDR, Python, DSP
 Summary: A summary of what I've learned about RTL-SDR so far. From the working principles of the USB dongles to the software I intend to use to capture and process the data for future projects.
 Status: draft
 
-# The Software
 
-In this section I'll introduce the software I'm going to be using for RTL SDR projects. To showcase all the tools and make sure the concepts sink in I'll be using all of them to  demodulate an FM signal. I'll start with specialized tools that sample the RTL SDR and demodulate FM signals themselves (**SDR#** and **rtl_fm**) and then move on to those that simply capture the IQ samples from the RTL-SDR (**rtl_sdr** and **pyrtlsdr**). Since python will be my language of choice for anything RTL SDR related, I'll demodulate the FM signals directly from IQ samples using only numpy and scipy. I'm planing to, in a later post, use GNU radio to do the same in real time as a way to get aqquainted with the software.
+In this second and final part of my introduction to RTL-SDR I'll go over the most popular software that is available for use with RTL-SDR dongles. I'll try to provide a big picture but I'll be focusing more on what I intend to use in future RTL-SDR projects.
 
-## SDR# #
+As a software defined radio Hello World of sorts I'll go over how to demodulate FM signals using a variety of tools. First using specialized software that does the demodulation for us (SDR# and rtl_fm) and then doing the demodulation directly from captured samples of the complex-baseband representation (IQ) using the python scientific computing ecosystem. Finally we'll implement this demodulation in real time using GNURadio.
 
-The RTL-SDR blog has a great [quickstart guide](http://www.rtl-sdr.com/qsg) to get you started with your RTL-SDR. If you follow the SDR# Setup Guide section you should be able to get your Osmocom drivers installed and your dongle working with SDR#. This is a great program with a nice GUI interface to test your RTL-SDR on. It is able to demodulate many different kinds of signals and it gives you a nice visualization of the power spectral density (PSD) and spectrogram of the output of your RTL SDR. Below is a screenshot of the program depicting the PSD estimate for a section of the comercial FM band.
+This post builds on the concepts presented in the [first part of this introduction]({filename}./RTL-SDR Hardware.md) helping frame them in the context of a real world application.
+
+
+# SDR# #
+
+The RTL-SDR blog has a great [quickstart guide](http://www.rtl-sdr.com/qsg) to get you started with your RTL-SDR USB dongle. If you're on Windows and follow the SDR# Setup Guide section you should be able to get your generic WinUSB drivers installed and your dongle working with SDR#. This program is a bit of a Jack of all trades when it comes to SDR. With a nice GUI interface it is able to demodulate many different kinds of signals providing you a nice visualization of the power spectral density (PSD) estimate and spectrogram (also known as waterfall) of the output of your RTL-SDR. Below is a screenshot of the program running when tuned for a section of the comercial FM band:
 
 ![SDR# screenshot]({filename}/images/SDR#.jpg)
 
 We won't play around much with this program so I won't elaborate more, but it's always nice to have around. Make sure to tune to an FM radio station you like that has a strong enough signal and write down its frequency. I will be using 97.4 MHz throughout this post, the frequency for Radio Comercial here in Lisbon, which has a particularly strong signal where I'm living.
 
 
-## librtlsdr and the Command Line tools
+# librtlsdr and the rtl-sdr codebase
 
-Pretty much all software that interfaces with the RTL-SDR makes use of this library. If you followed the quickstart guide linked above and downloaded SDR#, one of the things it has you do is run a batch file that downloads this library and copies the 32 bit version of rtlsdr.dll to the sdrsharp folder. Sadly it throws the rest of it away so you'll have to go ahead to the [Osmocom rtl-sdr wiki](http://sdr.osmocom.org/trac/wiki/rtl-sdr) and download it again if you need the 64 bit version and the command line utilities that come packaged with it. You can either build it from [source](http://cgit.osmocom.org/rtl-sdr) or grab the [pre-built windows version](http://sdr.osmocom.org/trac/attachment/wiki/rtl-sdr/RelWithDebInfo.zip).
+Most software that interfaces with the RTL-SDR makes use of this library. If you followed the quickstart guide linked above and downloaded SDR#, one of the things it has you do is run a batch file that downloads this library and copies the 32 bit version of rtlsdr.dll to the sdrsharp folder. Sadly it throws the rest of it away so you'll have to go ahead to the [Osmocom rtl-sdr website](http://sdr.osmocom.org/trac/wiki/rtl-sdr) and download it again if you need the 64 bit version and the command line utilities that come packaged with it. You can either grab the [pre-built windows version](http://sdr.osmocom.org/trac/attachment/wiki/rtl-sdr/RelWithDebInfo.zip) or [build it from source](http://sdr.osmocom.org/trac/wiki/rtl-sdr#Buildingthesoftware) if you're on Linux (or feeling adventurous).
 
-In it's 32 and 64 bits releases librtlsdr contains a number of command line utilities and 3 dlls. Of the command line tools we'll be mostly interested in **rtl_test**, **rtl_sdr** and **rtl_fm** for now. The dynamic-link library rtlsdr.dll is what contains the functions to interface with RTL SDR that are used by all other tools.
+The [rtl-sdr codebase](http://cgit.osmocom.org/rtl-sdr) (alternative [github mirror](https://github.com/steve-m/librtlsdr)), curated by Osmocom is the backbone of the rtl-sdr community. It contains the code for both the rtlsdr.dll drivers (librtlsdr) and a number of command line utilities that use this library to perform a number of functions. Out of these we'll be mostly interested in **rtl_test**, **rtl_sdr** and **rtl_fm** for now. The following sections will go into detail about each of these tools but for now let us focus on the main library.
 
-TODO: explain gain settings
-{
-'auto' doesn't mean acg;
-'auto' means not manual = some default value is used;
-'set_acg_mode' = Digital ACG in the RTL2832U;
-}
+The driver relies on libusb (which comes conveniently packed with the pre-built windows version but must be separately installed on Linux) to provide functions to interface with the RTL-SDR dongle. The functions it exports are what allow us to set the RTL-SDR dongle configuration parameters and read IQ samples. Some of these parameters are not exposed directly but are instead set through an internal algorithm. One possible reason for this is that the driver must support RTL dongles sporting a number of different tuner chips while providing a uniform tuner-agnostic interface. The list that follows reports the most relevant (for now) functions that the library exports and what their implementations mean for dongles with a R820T/T2 tuner:
 
-TODO: library limitations
-{R820T also has LNA, mixer and IF gain settings - the exact steps are not known. The numbers in the library code are through measuring the gain at a fixed frequency. That gave 0..33dB for the LNA, 0..16dB for the mixer and -4.7..40.8dB for the IF gain. The current library does not expose these settings through an API, only LNA and mixer are set through some algorithm. IF gain is set to a fixed value. 
-The mixer gain step is 1dB (matches the empirical data passably, but not great) and the IF/VGA gain step is 3.5dB (matches mine basically dead-on). LNA gain step is not mentioned, all it says is "1111 - max, 0000 - min"
-33 dB+16 dB= 49 dB}
+* **rtlsdr_open/close**: opens the device and initializes it/closes the device;
+* **rtlsdr_get_center_freq/set**: gets/sets the center frequency to tune to by configuring the tuner's PLL based frequency synthesizer to $f_c + f_IF$ (high-side injection);
+* **rtlsdr_get_freq_correction/set**: gets/sets the frequency correction parameter in parts per million (ppm);
+* **rtlsdr_get_tuner_type**: gets the tuner type;
+* **rtlsdr_get_tuner_gains**: gets the list of supported gain values by the tuner. For the R820T this list is hardcoded and was determined experimentally. Its single parameter corresponds to all possible combinations of LNA and mixer gains as the VGA is always set to a fixed value;
+* **rtlsdr_set_tuner_gain_mode**: sets the tuner gain mode to automatic (AGC is used for both LNA and mixer) or manual (gain value is provided manually through the next function);
+* **rtlsdr_get_tuner_gain/set**: gets/sets the tuner gains. For R820T it selects the LNA and mixer gains in order to provide a gain value as close as possible to the provided gain. VGA gain (IF gain) is set to a constant;
+* **rtlsdr_set_tuner_if_gain**: sets IF gain. Unsuported for R820T;
+* **rtlsdr_set_tuner_bandwidth**: sets the tuner bandwidth through adjusting the IF filters. In practice, the list of supported values by the R820T tuner are 6, 7 and 8 MHz or a list of values ranging from 350 kHz to 2.43 MHz. The driver will always round upwards to the nearest supported value. The IF frequency used by the device is determined based on the bandwidth chosen with 4.57 MHz being used for 7 or 8 MHz bandwidth, 3.57 MHz for 6 MHz bandwidth and 2.3 MHz for any smaller bandwidth values;
+* **rtlsdr_get_sample_rate/set**: gets/sets the sample rate of the rtl-sdr output to a value inside the allowed range of [225001; 300000] Hz ∪ [900001; 3200000] Hz. Also sets the bandwidth of the tuner to be the same as the sample rate if it wasn't set before.
+* **rtlsdr_set_agc_mode**: sets the RTL2832U to use digital AGC (not the tuner's). This seems to amount only to simple fixed gain value being applied;
+* **rtlsdr_read_sync**: reads a fixed number of interleaved 8-bit IQ samples from the device synchronously;
+* **rtlsdr_read_async/cancel_async**: reads asynchronously from the device until cancel_async is called.
+
+It should be mentioned that, as with a lot of useful open source software, there exist a number of forks that seek to tweak and extend the capabilities of the rtl-sdr beyond what the standard drivers allow. Most of these should however be considered experimental. Two examples of such forks are:
+
+* [mutability's](https://github.com/mutability/rtl-sdr/): which extends the tuning range of the standard driver via a number of tricks involving manipulating the IF frequency and whether high or low-side injection is used;
+* [keenerd's](https://github.com/keenerd/rtl-sdr): from the author of the rtl_fm and rtl_power command line tools which includes some modifications to the command line utilities;
+
+#
+
+## rtl_test
+
 TODO: frequency error 
 {For both kinds the tuner error is ~30 +-20 PPM}
 {All of the dongles have significant frequency offsets from reality that can be measured and corrected at runtime. My ezcap with E4000 tuner has a frequency offset of about ~44 Khz or ~57 PPM from reality as determined by checking against a local 751 Mhz LTE cell using LTE Cell Scanner. Here's a plot of frequency offsets in PPM over a week. The major component of variation in time is ambient temperature. With the R820T tuner dongle after correctly for I have has a ~ -17 Khz offset at GSM frequencies or -35 ppm absolute after applying a 50 ppm initial error correction. When using kalibrate for this the initial frequency error is often too large and the FCCH peak might be outside the sampled 200 KHz bandwidth. This requires passing an initial ppm error parameter (from LTE scanner) -e . Another tool for checking frequency corrections is [keenerd's version](https://github.com/keenerd/rtl-sdr) of rtl_test which uses (I think) ntp and system clock to estimate it rather than cell phone basestation broadcasts.}
 
 
-### rtl_test
-
-We'll start our exploration of librtlsdr with rtl_test. This is a command line utility that allows you to perform different tests on your RTL SDR dongle and figure out the allowable ranges for some of the control parameters when capturing samples with your dongle. The following command will capture samples at 2.4 MHz and report any samples lost. You can suspend the program with Ctrl+C and it will tell you how many samples per million were lost:
+We'll start our exploration of the rtl-sdr command tools with rtl_test. This is an utility that allows you to perform different tests on your RTL-SDR dongle and figure out the allowable ranges for some of the control parameters when capturing samples with your dongle. The following command will capture samples at 2.4 MHz and report any samples lost. You can suspend the program with Ctrl+C and it will tell you how many samples per million were lost:
 
 	:::
 	> rtl_test -s 2400000
@@ -68,7 +84,7 @@ We'll start our exploration of librtlsdr with rtl_test. This is a command line u
 	User cancel, exiting...
 	Samples per million lost (minimum): 3
 	
-As you can see it will also report all the supported values for the gain setting of the tuner. When you specify a tuner gain in any other program it will usually use the nearest allowable value. Keep in mind that the default when no gain is specified is usually to use automatic gain control which uses a feedback of the signal itself to control the gain of the input LNA.
+As you can see it will also report all the supported values for the gain setting of the tuner. 
 
 As you can see my RTL-SDR blog dongle is dropping a few samples at 2.4 MHz. You can try different settings of the sample rate with the **-s** option in order to figure out a safe sample rate at which no samples are dropped. Keep in mind that this can vary according to temperature and also your computer and USB ports. 
 
@@ -76,7 +92,7 @@ The allowed range of sample rates for RTL SDR dongles is [225001; 300000] ∪ [9
 
 Using the **-p** option will also report the PPM error measurement as estimated (I think) from measuring GSM signals (since they're quite high frequency). Letting it run for a few minutes should give you a somewhat reliable estimate that you can then use as the frequency correction parameter for other programs such as SDR# or rtl_sdr. Unfortunately, I couldn't get this to work myself as I get no PPM reports from running the program and I'm not sure why...
 
-### rtl_fm
+## rtl_fm
 
 rtl_fm is a very resource efficient command line tool to capture IQ samples from the RTL SDR and demodulate FM, AM and SSB signals. For more information on this program make sure to check the [rtl_fm guide](http://kmkeen.com/rtl-demod-guide/).
 
@@ -153,7 +169,7 @@ Alternativelly you could install and use [SoX](http://sox.sourceforge.net/) whic
 
 You can replace "-t waveaudio" with a .wav filename to store it in a wav file instead. Make sure to refer to [SoX's documentation](http://sox.sourceforge.net/sox.html) for a full description of the options available.
 
-### rtl_sdr
+## rtl_sdr
 
 Finally, the most general use command line tool in the librtlsdr package is rtl_sdr. This program will let you capture IQ samples directly and store them in a file:
 
@@ -187,7 +203,7 @@ A more convenient format to process the data digitally is to load it as complex 
 
 ##
 
-## pyrtlsdr
+# pyrtlsdr
 
 pyrtlsdr is a python library that wraps the librtlsdr rtlsdr.dll functions. It lets you read IQ samples from your RTL SDR directly in python and get them into a complex numpy array.
 
@@ -221,6 +237,10 @@ Now that we know how to capture IQ samples and load them in python, either throu
 Basics of FM modulation
 
 [DSP Tricks](http://www.embedded.com/design/configurable-systems/4212086/DSP-Tricks--Frequency-demodulation-algorithms-)
+
+# GNURadio
+
+sds
 
 # Up Next
 
