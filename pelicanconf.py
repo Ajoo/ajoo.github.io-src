@@ -19,7 +19,7 @@ DEFAULT_LANG = 'English'
 PATH = 'content'
 
 DEFAULT_CATEGORY = 'General'
-STATIC_PATHS = ['images']
+STATIC_PATHS = ['images', 'audio']
 TYPOGRIFY = True
 PLUGIN_PATHS = ['plugins']
 PLUGINS = ['render_math', 'liquid_tags.img', 'liquid_tags.fig', 'liquid_tags.audio', 'liquid_tags.include_code']

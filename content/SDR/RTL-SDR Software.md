@@ -24,14 +24,14 @@ We won't play around much with this program so I won't elaborate more, but it's 
 
 # librtlsdr and the rtl-sdr codebase
 
-Most software that interfaces with the RTL-SDR makes use of this library. If you followed the quickstart guide linked above and downloaded SDR#, one of the things it has you do is run a batch file that downloads this library and copies the 32 bit version of rtlsdr.dll to the sdrsharp folder. Sadly it throws the rest of it away so you'll have to go ahead to the [Osmocom rtl-sdr website](http://sdr.osmocom.org/trac/wiki/rtl-sdr) and download it again if you need the 64 bit version and the command line utilities that come packaged with it. You can either grab the [pre-built windows version](http://sdr.osmocom.org/trac/attachment/wiki/rtl-sdr/RelWithDebInfo.zip) or [build it from source](http://sdr.osmocom.org/trac/wiki/rtl-sdr#Buildingthesoftware) if you're on Linux (or feeling adventurous).
+Most software that interfaces with the RTL-SDR makes use of this library. If you followed the quickstart guide linked above and downloaded SDR#, one of the things it has you do is run a batch file that downloads a pre-build package of this codebase and copies the 32 bit version of rtlsdr.dll to the sdrsharp folder. Sadly it throws the rest of it away so you'll have to go ahead to the [Osmocom rtl-sdr website](http://sdr.osmocom.org/trac/wiki/rtl-sdr) and download it again if you need the 64 bit version and the command line utilities that come packaged with it. You can either grab the [pre-built windows version](http://sdr.osmocom.org/trac/attachment/wiki/rtl-sdr/RelWithDebInfo.zip) or [build it from source](http://sdr.osmocom.org/trac/wiki/rtl-sdr#Buildingthesoftware) if you're on Linux (or feeling adventurous).
 
 The [rtl-sdr codebase](http://cgit.osmocom.org/rtl-sdr) (alternative [github mirror](https://github.com/steve-m/librtlsdr)), curated by Osmocom is the backbone of the rtl-sdr community. It contains the code for both the rtlsdr.dll drivers (librtlsdr) and a number of command line utilities that use this library to perform a number of functions. Out of these we'll be mostly interested in **rtl_test**, **rtl_sdr** and **rtl_fm** for now. The following sections will go into detail about each of these tools but for now let us focus on the main library.
 
-The driver relies on libusb (which comes conveniently packed with the pre-built windows version but must be separately installed on Linux) to provide functions to interface with the RTL-SDR dongle. The functions it exports are what allow us to set the RTL-SDR dongle configuration parameters and read IQ samples. Some of these parameters are not exposed directly but are instead set through an internal algorithm. One possible reason for this is that the driver must support RTL dongles sporting a number of different tuner chips while providing a uniform tuner-agnostic interface. The list that follows reports the most relevant (for now) functions that the library exports and what their implementations mean for dongles with a R820T/T2 tuner:
+The driver relies on libusb (which comes conveniently packed with the pre-built windows version but must be separately installed on Linux) to provide functions to interface with the RTL-SDR dongle. The functions it exports are what allow us to set the RTL-SDR dongle configuration parameters and read IQ samples. Some of these parameters are not exposed directly but are instead set through an internal algorithm. One possible reason for this is that the driver must support RTL dongles sporting a number of different tuner chips while providing a uniform tuner-agnostic interface. To give you an idea of the library's capabilities, the list that follows details the most relevant (for now) functions that it exports and what their implementations mean for dongles with a R820T/T2 tuner:
 
 * **rtlsdr_open/close**: opens the device and initializes it/closes the device;
-* **rtlsdr_get_center_freq/set**: gets/sets the center frequency to tune to by configuring the tuner's PLL based frequency synthesizer to $f_c + f_IF$ (high-side injection);
+* **rtlsdr_get_center_freq/set**: gets/sets the center frequency to tune to by configuring the tuner's PLL based frequency synthesizer to $f_c + f_{IF}$ (high-side injection);
 * **rtlsdr_get_freq_correction/set**: gets/sets the frequency correction parameter in parts per million (ppm);
 * **rtlsdr_get_tuner_type**: gets the tuner type;
 * **rtlsdr_get_tuner_gains**: gets the list of supported gain values by the tuner. For the R820T this list is hardcoded and was determined experimentally. Its single parameter corresponds to all possible combinations of LNA and mixer gains as the VGA is always set to a fixed value;
@@ -39,7 +39,7 @@ The driver relies on libusb (which comes conveniently packed with the pre-built 
 * **rtlsdr_get_tuner_gain/set**: gets/sets the tuner gains. For R820T it selects the LNA and mixer gains in order to provide a gain value as close as possible to the provided gain. VGA gain (IF gain) is set to a constant;
 * **rtlsdr_set_tuner_if_gain**: sets IF gain. Unsuported for R820T;
 * **rtlsdr_set_tuner_bandwidth**: sets the tuner bandwidth through adjusting the IF filters. In practice, the list of supported values by the R820T tuner are 6, 7 and 8 MHz or a list of values ranging from 350 kHz to 2.43 MHz. The driver will always round upwards to the nearest supported value. The IF frequency used by the device is determined based on the bandwidth chosen with 4.57 MHz being used for 7 or 8 MHz bandwidth, 3.57 MHz for 6 MHz bandwidth and 2.3 MHz for any smaller bandwidth values;
-* **rtlsdr_get_sample_rate/set**: gets/sets the sample rate of the rtl-sdr output to a value inside the allowed range of [225001; 300000] Hz ∪ [900001; 3200000] Hz. Also sets the bandwidth of the tuner to be the same as the sample rate if it wasn't set before.
+* **rtlsdr_get_sample_rate/set**: gets/sets the sample rate of the rtl-sdr output to a value inside the allowed range of [225001; 300000] Hz ∪ [900001; 3200000] Hz. Also sets the bandwidth of the tuner to be the same as the sample rate if it wasn't set manually before.
 * **rtlsdr_set_agc_mode**: sets the RTL2832U to use digital AGC (not the tuner's). This seems to amount only to simple fixed gain value being applied;
 * **rtlsdr_read_sync**: reads a fixed number of interleaved 8-bit IQ samples from the device synchronously;
 * **rtlsdr_read_async/cancel_async**: reads asynchronously from the device until cancel_async is called.
@@ -53,53 +53,169 @@ It should be mentioned that, as with a lot of useful open source software, there
 
 ## rtl_test
 
-TODO: frequency error 
-{For both kinds the tuner error is ~30 +-20 PPM}
-{All of the dongles have significant frequency offsets from reality that can be measured and corrected at runtime. My ezcap with E4000 tuner has a frequency offset of about ~44 Khz or ~57 PPM from reality as determined by checking against a local 751 Mhz LTE cell using LTE Cell Scanner. Here's a plot of frequency offsets in PPM over a week. The major component of variation in time is ambient temperature. With the R820T tuner dongle after correctly for I have has a ~ -17 Khz offset at GSM frequencies or -35 ppm absolute after applying a 50 ppm initial error correction. When using kalibrate for this the initial frequency error is often too large and the FCCH peak might be outside the sampled 200 KHz bandwidth. This requires passing an initial ppm error parameter (from LTE scanner) -e . Another tool for checking frequency corrections is [keenerd's version](https://github.com/keenerd/rtl-sdr) of rtl_test which uses (I think) ntp and system clock to estimate it rather than cell phone basestation broadcasts.}
-
-
 We'll start our exploration of the rtl-sdr command tools with rtl_test. This is an utility that allows you to perform different tests on your RTL-SDR dongle and figure out the allowable ranges for some of the control parameters when capturing samples with your dongle. The following command will capture samples at 2.4 MHz and report any samples lost. You can suspend the program with Ctrl+C and it will tell you how many samples per million were lost:
 
 	:::
-	> rtl_test -s 2400000
+	$ rtl_test -s 2400000
 	Found 1 device(s):
 	  0:  Realtek, RTL2838UHIDIR, SN: 00000001
 
 	Using device 0: Generic RTL2832U OEM
 	Found Rafael Micro R820T tuner
-	Supported gain values (29): 0.0 0.9 1.4 2.7 3.7 7.7 8.7 12.5 14.4 15.7 16.6 19.7
-	 20.7 22.9 25.4 28.0 29.7 32.8 33.8 36.4 37.2 38.6 40.2 42.1 43.4 43.9 44.5 48.0
-	 49.6
+	Supported gain values (29): 0.0 0.9 1.4 2.7 3.7 7.7 8.7 12.5 14.4 15.7 16.6 19.7 20.7 22.9 25.4 28.0 29.7 32.8 33.8 36.4 37.2 38.6 40.2 42.1 43.4 43.9 44.5 48.0 49.6 
+	[R82XX] PLL not locked!
 	Sampling at 2400000 S/s.
 
 	Info: This tool will continuously read from the device, and report if
 	samples get lost. If you observe no further output, everything is fine.
 
 	Reading samples in async mode...
-	lost at least 64 bytes
-	lost at least 144 bytes
-	lost at least 100 bytes
-	Signal caught, exiting!
+	^CSignal caught, exiting!
 
 	User cancel, exiting...
-	Samples per million lost (minimum): 3
-	
-As you can see it will also report all the supported values for the gain setting of the tuner. 
+	Samples per million lost (minimum): 0
 
-As you can see my RTL-SDR blog dongle is dropping a few samples at 2.4 MHz. You can try different settings of the sample rate with the **-s** option in order to figure out a safe sample rate at which no samples are dropped. Keep in mind that this can vary according to temperature and also your computer and USB ports. 
+As you can see it will also report all the supported values for the gain setting of the tuner (see *rtlsdr_get_tuner_gains*).  The PLL not locked message meaning that a lock was not achieved in the frequency synthesizer does not show up when running the program under windows and I'm not sure what causes it. My NooElec RTL-SDR blog dongle is not dropping any samples at 2.4 MHz. You can try different settings of the sample rate with the **-s** option within the allowable range (see *rtlsdr_set_sample_rate* above) in order to figure out a maximum safe sample rate at which no samples are dropped (typically 2.56 MHz before the RTL2832U starts dropping samples internally). For instance, trying to sample at the known "unsafe" rate of 2.7 MHz yields:
 
-The allowed range of sample rates for RTL SDR dongles is [225001; 300000] ∪ [900001; 3200000] Hz. If you try to use a sample rate outside of this range you will get an "Invalid sample rate" message and the default of 2.048 MHz will be used by rtl_test.
+	:::
+	Sampling at 2700000 S/s.
 
-Using the **-p** option will also report the PPM error measurement as estimated (I think) from measuring GSM signals (since they're quite high frequency). Letting it run for a few minutes should give you a somewhat reliable estimate that you can then use as the frequency correction parameter for other programs such as SDR# or rtl_sdr. Unfortunately, I couldn't get this to work myself as I get no PPM reports from running the program and I'm not sure why...
+	Info: This tool will continuously read from the device, and report if
+	samples get lost. If you observe no further output, everything is fine.
+
+	Reading samples in async mode...
+	lost at least 68 bytes
+	lost at least 68 bytes
+	lost at least 68 bytes
+	lost at least 68 bytes
+	lost at least 188 bytes
+	lost at least 256 bytes
+	lost at least 68 bytes
+	lost at least 188 bytes
+	lost at least 68 bytes
+	lost at least 68 bytes
+	lost at least 68 bytes
+	lost at least 68 bytes
+	^CSignal caught, exiting!
+
+	User cancel, exiting...
+	Samples per million lost (minimum): 11
+
+The tuner's local oscillator frequency can present a significant offset from reality due to the low quality crystal ocillator present in most dongles. Perhaps one of the most useful functions of rtl_test is measuring this error through the the **-p** option which will report the frequency error in parts per million (PPM) as estimated (I think) from  tuning to GSM basestation signals of well known (high) frequency. These frequency errors will vary based on ambient temperature but are otherwise quite repeatable (even inter day). 
+Letting it run for a few minutes should give you a somewhat reliable estimate that you can then use as the frequency correction parameter for other programs such as SDR# or rtl_sdr. The following is the result of running the program with the **-p** option using my NooElec dongle directly after plugging it in (not warmed up):
+
+
+	:::
+	$ rtl_test -s 2400000 -p
+	Found 1 device(s):
+	  0:  Realtek, RTL2838UHIDIR, SN: 00000001
+
+	Using device 0: Generic RTL2832U OEM
+	Found Rafael Micro R820T tuner
+	Supported gain values (29): 0.0 0.9 1.4 2.7 3.7 7.7 8.7 12.5 14.4 15.7 16.6 19.7 20.7 22.9 25.4 28.0 29.7 32.8 33.8 36.4 37.2 38.6 40.2 42.1 43.4 43.9 44.5 48.0 49.6 
+	[R82XX] PLL not locked!
+	Sampling at 2400000 S/s.
+	Reporting PPM error measurement every 10 seconds...
+	Press ^C after a few minutes.
+	Reading samples in async mode...
+	real sample rate: 2400188 current PPM: 78 cumulative PPM: 78
+	real sample rate: 2400164 current PPM: 69 cumulative PPM: 73
+	real sample rate: 2400190 current PPM: 80 cumulative PPM: 75
+	real sample rate: 2400153 current PPM: 64 cumulative PPM: 73
+	real sample rate: 2400151 current PPM: 63 cumulative PPM: 71
+	real sample rate: 2400153 current PPM: 64 cumulative PPM: 70
+	real sample rate: 2400159 current PPM: 66 cumulative PPM: 69
+	real sample rate: 2400177 current PPM: 74 cumulative PPM: 70
+	real sample rate: 2400157 current PPM: 66 cumulative PPM: 69
+	real sample rate: 2400163 current PPM: 68 cumulative PPM: 69
+	real sample rate: 2400150 current PPM: 63 cumulative PPM: 69
+	real sample rate: 2400197 current PPM: 82 cumulative PPM: 70
+	real sample rate: 2400155 current PPM: 65 cumulative PPM: 69
+	real sample rate: 2400144 current PPM: 60 cumulative PPM: 69
+	real sample rate: 2400165 current PPM: 69 cumulative PPM: 69
+	real sample rate: 2400150 current PPM: 63 cumulative PPM: 68
+	real sample rate: 2400169 current PPM: 71 cumulative PPM: 68
+	real sample rate: 2400166 current PPM: 70 cumulative PPM: 68
+	real sample rate: 2400164 current PPM: 69 cumulative PPM: 69
+	^CSignal caught, exiting!
+
+	User cancel, exiting...
+	Samples per million lost (minimum): 0
+
+The results I get from my rtl-sdr.com dongle paint a very different picture owing to it's much more accurate 1 PPM temperature compensated oscillator. After plugging in the dongle the cumulative frequency error quickly drops to a much smaller value:
+
+	:::
+	real sample rate: 2400001 current PPM: 1 cumulative PPM: 1
+	real sample rate: 2399958 current PPM: -17 cumulative PPM: -8
+	real sample rate: 2400060 current PPM: 25 cumulative PPM: 3
+	real sample rate: 2399996 current PPM: -2 cumulative PPM: 2
+	real sample rate: 2400014 current PPM: 6 cumulative PPM: 3
+	real sample rate: 2399948 current PPM: -21 cumulative PPM: -1
+	real sample rate: 2400026 current PPM: 11 cumulative PPM: 0
+	real sample rate: 2400005 current PPM: 2 cumulative PPM: 1
+	real sample rate: 2400072 current PPM: 30 cumulative PPM: 4
+	real sample rate: 2399939 current PPM: -25 cumulative PPM: 1
+	real sample rate: 2400011 current PPM: 5 cumulative PPM: 1
+	real sample rate: 2399996 current PPM: -1 cumulative PPM: 1
+	real sample rate: 2400017 current PPM: 7 cumulative PPM: 2
+	real sample rate: 2399950 current PPM: -21 cumulative PPM: 0
+	real sample rate: 2400030 current PPM: 13 cumulative PPM: 1
+	real sample rate: 2400010 current PPM: 5 cumulative PPM: 1
+	real sample rate: 2399982 current PPM: -7 cumulative PPM: 1
+	real sample rate: 2400030 current PPM: 13 cumulative PPM: 1
+	real sample rate: 2399995 current PPM: -2 cumulative PPM: 1
+	real sample rate: 2400004 current PPM: 2 cumulative PPM: 1
+	real sample rate: 2400019 current PPM: 8 cumulative PPM: 1
+	real sample rate: 2399954 current PPM: -19 cumulative PPM: 1
+	real sample rate: 2400013 current PPM: 5 cumulative PPM: 1
+	real sample rate: 2400012 current PPM: 5 cumulative PPM: 1
+	real sample rate: 2400003 current PPM: 1 cumulative PPM: 1
+	real sample rate: 2400013 current PPM: 6 cumulative PPM: 1
+	real sample rate: 2400004 current PPM: 2 cumulative PPM: 1
+	real sample rate: 2399978 current PPM: -9 cumulative PPM: 1
+	real sample rate: 2400002 current PPM: 1 cumulative PPM: 1
+	real sample rate: 2400029 current PPM: 12 cumulative PPM: 1
+	real sample rate: 2399986 current PPM: -6 cumulative PPM: 1
+	real sample rate: 2399996 current PPM: -1 cumulative PPM: 1
+	real sample rate: 2400014 current PPM: 6 cumulative PPM: 1
+	real sample rate: 2399992 current PPM: -3 cumulative PPM: 1
+	real sample rate: 2400019 current PPM: 8 cumulative PPM: 1
+	real sample rate: 2399971 current PPM: -12 cumulative PPM: 1
+	real sample rate: 2400010 current PPM: 4 cumulative PPM: 1
+	real sample rate: 2400001 current PPM: 0 cumulative PPM: 1
+	real sample rate: 2400011 current PPM: 5 cumulative PPM: 1
+	real sample rate: 2400038 current PPM: 16 cumulative PPM: 1
+	real sample rate: 2399927 current PPM: -30 cumulative PPM: 1
+	real sample rate: 2400016 current PPM: 7 cumulative PPM: 1
+	real sample rate: 2400005 current PPM: 2 cumulative PPM: 1
+	real sample rate: 2400005 current PPM: 2 cumulative PPM: 1
+	real sample rate: 2400012 current PPM: 5 cumulative PPM: 1
+	real sample rate: 2399996 current PPM: -1 cumulative PPM: 1
+	real sample rate: 2400059 current PPM: 25 cumulative PPM: 1
+	real sample rate: 2399902 current PPM: -41 cumulative PPM: 0
+	real sample rate: 2400034 current PPM: 14 cumulative PPM: 1
+	real sample rate: 2400005 current PPM: 2 cumulative PPM: 1
+	real sample rate: 2400003 current PPM: 1 cumulative PPM: 1
+	real sample rate: 2400007 current PPM: 3 cumulative PPM: 1
+	real sample rate: 2399998 current PPM: -1 cumulative PPM: 1
+	real sample rate: 2399985 current PPM: -6 cumulative PPM: 1
+	real sample rate: 2400005 current PPM: 2 cumulative PPM: 1
+	real sample rate: 2400005 current PPM: 2 cumulative PPM: 1
+	real sample rate: 2400006 current PPM: 3 cumulative PPM: 1
+
+
+I should mention that I get no PPM reports from running rtl_test under windows and again I'm not sure why...
+
+
 
 ## rtl_fm
 
-rtl_fm is a very resource efficient command line tool to capture IQ samples from the RTL SDR and demodulate FM, AM and SSB signals. For more information on this program make sure to check the [rtl_fm guide](http://kmkeen.com/rtl-demod-guide/).
+rtl_fm is a very resource efficient command line tool to capture IQ samples from the RTL-SDR and demodulate FM, AM and SSB signals. For more information on this program make sure to check the [rtl_fm guide](http://kmkeen.com/rtl-demod-guide/).
 
-The following command will demodulate and record a wideband FM channel at 97.4 MHz and record it in a file output.raw. You can press Ctrl+C to exit after capturing enough samples.
+The following command will demodulate and record a wideband FM channel at 97.4 MHz and record it in a file *comercial.raw*. You can press Ctrl+C to exit after capturing enough samples.
 
 	:::
-	> rtl_fm -M wbfm -f 97.4M -g 20 output.raw
+	$ rtl_fm -M wbfm -f 97.4M -g 20 comercial.raw
 	
 The meaning of the options is:
 
@@ -133,9 +249,9 @@ The output I get running this command and then stopping the execution after a fe
 	Output at 170000 Hz.
 	Signal caught, exiting!
 
-You might notice that rtl_fm tuned to a different frequency (97.671 MHz) than that we specified (97.4 MHz). This is done to avoid a known imperfection in RTL-SDRs that causes a small DC bias to be present at the ADC output. This way the dongle is tuned to a slightly different frequency to avoid the DC spike and the software later corrects for this in the digital signal processing by shifting the captured signal in frequency to 0 Hz.
+You might notice that rtl_fm tuned to a different frequency (97.671 MHz) than that we specified (97.4 MHz). This is done to avoid the DC bias that is present in dongles with Zero-IF tuners such as the e4000. This way the dongle is tuned to a slightly different frequency in order to avoid the DC spike and the software later corrects for this in the digital signal processing by shifting the captured signal in frequency to 0 Hz. While this shouldn't be necessary for R820T tuners one might argue that it's still justified in case there is any significant flicker noise (1/f psd) or higher power law noises present at the output.
 
-Notice also that the software oversamples by 6x at 1.02 MHz and then decimates the output to the (implicitely) specified frequency of 170 kHz before demodulating. This is because, first and foremost, 170 kHz is not a valid sampling frequency for the RTL-SDR (see the rtl_test section above for the valid range). 1.02 MHz is in fact the first integer multiple of 170 kHz that fits in the allowed range. But this is not the only reason; in fact if we specifically ask rtl_fm to sample the input at 240 kHZ with **-s 240k**, it will still oversample by 5x at 1.2 MHz despite the fact that 240 MHz is within the allowed range of sampling frequencies of the RTL SDR:
+Notice also that the software oversamples by 6x at 1.02 MHz and then decimates the output to the (implicitely) specified frequency of 170 kHz before demodulating. This is because, first and foremost, 170 kHz is not a valid sampling frequency for the RTL-SDR (see the librtlsdr section above for the valid range). 1.02 MHz is in fact the first integer multiple of 170 kHz that fits in the allowed range. But this is not the only reason; in fact if we specifically ask rtl_fm to sample the input at 240 kHZ with **-s 240k**, it will still oversample by 5x at 1.2 MHz despite the fact that 240 MHz is within the allowed range of sampling frequencies of the RTL SDR:
 
 	:::
 	Oversampling input by: 5x.
@@ -144,44 +260,46 @@ Notice also that the software oversamples by 6x at 1.02 MHz and then decimates t
 	Sampling at 1200000 S/s.
 	Output at 240000 Hz.
 	
-My assumption is that this is done in order to mitigate the quantization noise. Recall that the output of the RTL SDR is 8 bits and therefore oversampling and decimating in software where we're not limited to 8 bits should provide a better noise figure than relying on doing the decimation in the chip. Furthermore, it provides greater control over the decimation process, letting the software choose the low-pass filter. From these considerations it would make sense to always use the highest possible sampling rate but rtl_fm is built with limited resources in mind so that might provide a reason for it compromising for sampling frequencies closer to 1 MHz.
+My assumption is that this is done in order to mitigate the quantization noise. Recall that the output of the RTL-SDR is 8 bits and therefore oversampling and decimating in software where we're not limited to 8 bits should provide a better noise figure than relying on doing the decimation in the chip. Furthermore, it provides greater control over the decimation process, letting the software choose the low-pass filter. From these considerations it would make sense to always use the highest possible sampling rate but rtl_fm is built with limited resources in mind so that might provide a reason for it compromising for sampling frequencies closer to 1 MHz.
 
 rtl_fm stores the raw audio in a file as signed 16 bits integers. To load it in python with numpy you can therefore do:
 
 	:::python
 	import numpy as np
 	
-	raw_audio = np.fromfile("output.raw", np.int16)
+	raw_audio = np.fromfile("comercial.raw", np.int16)
 	
 To listen to it you can always use scipy to store it as a .wav file and then play it in your favourite media player:
 
 	:::python
 	from scipy.io import wavfile
 	
-	wavfile.write("COMERCIAL.wav", rate=32000, raw_audio)
+	wavfile.write("comercial.wav", rate=32000, raw_audio)
 	
-Recall that the default output rate of rtl_fm in wideband FM mode is 32 kHz but if you changed that with the -r option make sure to provide wavfile.write with the correct one (and that it is within the range of your sound card...).
+Recall that the default output rate of rtl_fm in wideband FM mode is 32 kHz but if you changed that with the -r option make sure to provide wavfile.write with the correct one (and that it is within the allowed range of your sound card...).
 
-Alternativelly you could install and use [SoX](http://sox.sourceforge.net/) which is a great program to convert audio files between formats (including raw audio signals), as well as playing and recording them. The following command will play the raw audio file with sample rate 32 kHz, 16 bits signed int encoding and 1 channel:
+{% audio {filename}/audio/comercial.wav %}
+
+Alternativelly you could install and use [SoX](http://sox.sourceforge.net/) which is a great program to convert audio files between formats (including raw audio signals), as well as playing and recording them. The following command will play the raw audio file with sample rate 32 kHz, 16 bits signed int encoding and 1 channel on my windows machine:
 
 	:::
-	> sox -r 32k -t raw -e signed -b 16 -c 1 COMERCIAL.RAW -t waveaudio
+	$ sox -r 32k -t raw -e signed -b 16 -c 1 comercial.raw -t waveaudio
 
 You can replace "-t waveaudio" with a .wav filename to store it in a wav file instead. Make sure to refer to [SoX's documentation](http://sox.sourceforge.net/sox.html) for a full description of the options available.
 
 ## rtl_sdr
 
-Finally, the most general use command line tool in the librtlsdr package is rtl_sdr. This program will let you capture IQ samples directly and store them in a file:
+Finally, the most general use command line tool in the rtl-sdr package is rtl_sdr. This program will let you capture IQ samples directly and store them in a file (or pipe them into some other command line application):
 
 	:::
-	> rtl_sdr -f 97400000 -g 20 -s 1020000 -n 10200000 COMERCIAL_s1m02_g20.bin
+	$ rtl_sdr -f 97400000 -g 20 -s 2400000 -n 24000000 comercial_s2m4_g20.dat
 	
 The options in this case mean:
 
 * **-f 97400000**: sets the tuner frequency to 97.4 MHz;
 * **-g 20**: sets the tuner gain to the closest allowable value to 20 dB (19.7 dB);
-* **-s 1020000**: sets the sample rate to 1.02 MHz;
-* **-n 10200000**: instructs rtl_sdr to capture 1.02e7 samples which should amount to a 10 seconds worth of samples at the given sample rate (10 s * 1.02e6 MHz).
+* **-s 2400000**: sets the sample rate to 2.4 MHz;
+* **-n 24000000**: instructs rtl_sdr to capture 2.4e7 samples which should amount to a 10 seconds worth of samples at the given sample rate (10 s * 2.4e6 MHz).
 	
 This utility stores the I and Q samples alternately as 8 bits unsigned integers. In order to load them in python we can therefore use something like:
 
@@ -205,9 +323,26 @@ A more convenient format to process the data digitally is to load it as complex 
 
 # pyrtlsdr
 
-pyrtlsdr is a python library that wraps the librtlsdr rtlsdr.dll functions. It lets you read IQ samples from your RTL SDR directly in python and get them into a complex numpy array.
+[pyrtlsdr](https://github.com/roger-/pyrtlsdr) is a python library that wraps the rtlsdr.dll library functions and provides you an object oriented API to access them. You can install it using pip since I' don't think it's available through conda. You also need to make sure that the rtlsdr.dll is in your python path. If you don't want to edit it on windows you can always just drop a copy of the necessary dlls into your working folder...
 
-You should make sure that the librtlsdr dlls can be found by pyrtlsdr. Either add them to your python path or just drop a copy in your working directory...
+If you want you can access directly the librtlsdr wrapper functions through importing the librtlsdr submodule. You'll have to initialize a pointer to the device that you then pass to all the librtlsdr functions. In order to open an rtl-sdr device for instance you could do:
+
+	:::python
+	from rtlsdr.librtlsdr import librtlsdr, p_rtlsdr_dev
+	
+	dev_p = p_rtlsdr_dev(None)		       #the device pointer
+	result = librtlsdr.rtlsdr_open(dev_p, 0) #opens device at index 0
+								       #returns an integer < 0 on error
+	
+
+This is however not the intended use of the library. It defines a much more convenient RtlSdr class which stores the device pointer (and a few other useful variables) and wraps all the functions as methods so that a much more pythonic API is exposed. Most of these methods will have the same name as the original librtlsdr function minus the *rtlsdr_* prefix (a notable exception being the methods to read the samples). It also defines a few notable properties that can be used to call the get/set methods in a more idiomatic way:
+
+* center_freq;
+* sample_rate;
+* gain;
+* freq_correction;
+* bandwidth.
+
 To collect 10 seconds of data with the same characteristics as that we collected with rtl_sdr we would do:
 
 	:::python
@@ -216,18 +351,18 @@ To collect 10 seconds of data with the same characteristics as that we collected
 	
 	#we use a context manager that automatically calls .close() on sdr
 	#whether the code block finishes successfully or an error occurs
-	with closing(RtlSdr()) as sdr:	
+	#initializing a RtlSdr instance automatically calls open()
+	with closing(RtlSdr()) as sdr:
+		#use the properties of RtlSdr instance to set the 
+		#appropriate parameters
 		sdr.sample_rate = 1020000
 		sdr.center_freq = 97.4e6
 		sdr.gain = 20
-		#sdr.freq_correction = 
-		#sdr.bandwidth = 
+		
+		#read 10 seconds worth of samples
 		x = sdr.read_samples(10*sdr.sample_rate)
 		
-Other properties of the RtlSdr class are:
 
-* freq_correction
-* bandwidth
 
 
 # Demodulating FM
