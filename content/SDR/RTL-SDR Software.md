@@ -17,7 +17,7 @@ This post builds on the concepts presented in the [first part of this introducti
 
 The RTL-SDR blog has a great [quickstart guide](http://www.rtl-sdr.com/qsg) to get you started with your RTL-SDR USB dongle. If you're on Windows and follow the SDR# Setup Guide section you should be able to get your generic WinUSB drivers installed and your dongle working with SDR#. This program is a bit of a Jack of all trades when it comes to SDR. With a nice GUI interface it is able to demodulate many different kinds of signals providing you a nice visualization of the power spectral density (PSD) estimate and spectrogram (also known as waterfall) of the output of your RTL-SDR. Below is a screenshot of the program running when tuned for a section of the comercial FM band:
 
-![SDR# screenshot]({filename}/images/SDR#.jpg)
+![SDR# screenshot]({filename}/images/SDR# screenshot.png)
 
 We won't play around much with this program so I won't elaborate more, but it's always nice to have around. Make sure to tune to an FM radio station you like that has a strong enough signal and write down its frequency. I will be using 97.4 MHz throughout this post, the frequency for Radio Comercial here in Lisbon, which has a particularly strong signal where I'm living.
 
@@ -362,14 +362,47 @@ To collect 10 seconds of data with the same characteristics as that we collected
 		#read 10 seconds worth of samples
 		x = sdr.read_samples(10*sdr.sample_rate)
 		
-
+#
 
 
 # Demodulating FM
 
-Now that we know how to capture IQ samples and load them in python, either through rtl_sdr or the pyrtlsdr python library, we can work on getting from these IQ samples to an actual audible signal.
+Armed with our new found knowledge of how to capture IQ samples and load them into python we can finally get working on demodulating FM signals. We will first plot the Welch power spectral density (PSD) estimate of the complex baseband representation obtained in either of the two previous sections:
 
-Basics of FM modulation
+	:::python
+	from scipy import signal
+	from scipy.fftpack import fftshift
+
+	f, Pxx = signal.welch(iq_samples, 2400000, detrend=lambda x: x)
+	f, Pxx = fftshift(f), fftshift(Pxx)
+
+	plt.semilogy(f/1e3, Pxx)
+	plt.xlabel('f [kHz]')
+	plt.ylabel('PSD [Power/Hz]')
+
+![Whole spectrum]({filename}/images/pwelch_whole.png)
+
+The first thing you should notice is that we massively oversampled the FM signal. Recall that at a sample rate of 2.4 MHz we're seeing a portion of the spectrum ranging from 97.4 MHz +- 1.2 MHz. The bandwidth of a comercial FM radio station however is usually around 200 kHz and the two peaks to the left and right of the main one are actually 2 different stations with a weaker signal.
+
+Oversampling the signal we want has an advantage which I touched upon in the rtl_fm section but I'll reiterate here. Because the RTL-SDR ADC is 8 bit there will be significant quantization noise and oversampling and decimating in software where the 8-bit limitation doesn't hold should yield a better SNR figure. I assume that this is the reason that SDR# also samples at 2.4 MHz by default when listening to FM.
+
+As to the other stations, we could have gotten rid of them by setting our IF filter bandwidth smaller. It was automatically set by the driver at 2.4 MHz when we set the sample rate and I chose not to set it lower because I wanted these other signals to show up in order to illustrate a point further along. Adjusting your IF filter to the bandwidth of the signal you're interested in when oversampling is probably a good idea though since more selectivity is always good.
+
+We're now ready to decimate the signal down to a more manageable rate of 200 kHz which is roughly the bandwidth of the signal we're interested. We'll let the decimation filter take care of the unwanted stations and noise:
+
+	:::python
+	iq_comercial = signal.decimate(iq_samples, 2400000//200000)
+
+As you can see the PSD estimate now contains only the signal of interest, FM station radio comercial:
+
+![Comercial spectrum]({filename}/images/pwelch_comercial.png)
+
+We can now proceed with the demodulation.
+
+	:::python
+	
+
+The interesting thing about SDR is that we can do anything with 
 
 [DSP Tricks](http://www.embedded.com/design/configurable-systems/4212086/DSP-Tricks--Frequency-demodulation-algorithms-)
 
