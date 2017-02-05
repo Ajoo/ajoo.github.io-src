@@ -6,11 +6,13 @@ Tags: RTL-SDR, DSP
 Summary: A summary of what I've learned about RTL-SDR so far. From the working principles of the USB dongles to the software I intend to use to capture and process the data for future projects.
 Status: published
 
-{% sourced_fig
+<!-- {% sourced_fig
 https://c2.staticflickr.com/4/3546/4599500082_93203ec261.jpg
 "K.W. Vanguard radio"
 "A vintage K.W. Vanguard radio. An iconic piece of equipment from a previous era of amateur radio enthusiasts. Image by Derek via"
-https://www.flickr.com/photos/xenoc/4599500082/ Flickr %}
+https://www.flickr.com/photos/xenoc/4599500082/ Flickr %} -->
+
+{% img {filename}/images/radio-1547786.png 500 "https://pixabay.com/pt/r%C3%A1dio-r%C3%A1dio-tubos-receptor-tubo-1547786/" "Old FM radio" %}
 
 The purpose of this two-part blog post is to introduce a piece of equipment which is quickly becoming a centerpiece of the modern radio enthusiast's toolbox. A cheap and powerful device that allows one to digitally sample the electromagnetic spectrum at a wide range of frequencies and is breathing new life into the amateur radio (HAM) community.
 
