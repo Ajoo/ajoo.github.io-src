@@ -40,7 +40,7 @@ def create_html(markup):
         audio_files = [g for g in groups if g]
 
     if any(audio_files):
-        audio_out = '<audio controls>'
+        audio_out = '<div class="audio-container"><audio controls>'
 
         for audio_file in audio_files:
 
@@ -56,7 +56,7 @@ def create_html(markup):
 
         # close audio tag
         audio_out += 'Your browser does not support the audio element.'
-        audio_out += '</audio>'
+        audio_out += '</audio></div>'
 
     else:
         raise ValueError("Error processing input, "

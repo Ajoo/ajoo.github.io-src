@@ -1,14 +1,17 @@
 Title: Intro to RTL-SDR - Part II
-Date: 2017-01-21 13:00
+Date: 2017-02-07 13:00
 Category: SDR
 Tags: RTL-SDR, Python, DSP
 Summary: A summary of what I've learned about RTL-SDR so far. From the working principles of the USB dongles to the software I intend to use to capture and process the data for future projects.
-Status: draft
 
+{% sourced_fig {filename}/external_images/SDRBlogImage_1_Rotated.jpg 500
+'RTL-SDR blog USB dongle'
+'RTL-SDR blog USB dongle.'
+http://www.rtl-sdr.com/buy-rtl-sdr-dvb-t-dongles/ %}
 
 In this second and final part of my introduction to RTL-SDR I'll go over the most popular software that is available for use with RTL-SDR dongles. I'll try to provide a big picture but I'll be focusing more on what I intend to use in future RTL-SDR projects.
 
-As a software defined radio Hello World of sorts I'll go over how to demodulate FM signals using a variety of tools. First using specialized software that does the demodulation for us (SDR# and rtl_fm) and then doing the demodulation directly from captured samples of the complex-baseband representation (IQ) using the python scientific computing ecosystem. Finally we'll implement this demodulation in real time using GNURadio.
+As a software defined radio Hello World of sorts I'll go over how to demodulate FM signals using a variety of tools. First using specialized software that does the demodulation for us (SDR# and rtl_fm) and then doing the demodulation directly from captured samples of the complex-baseband representation (IQ) using the python scientific computing ecosystem. 
 
 This post builds on the concepts presented in the [first part of this introduction]({filename}./RTL-SDR Hardware.md) helping frame them in the context of a real world application.
 
@@ -17,7 +20,7 @@ This post builds on the concepts presented in the [first part of this introducti
 
 The RTL-SDR blog has a great [quickstart guide](http://www.rtl-sdr.com/qsg) to get you started with your RTL-SDR USB dongle. If you're on Windows and follow the SDR# Setup Guide section you should be able to get your generic WinUSB drivers installed and your dongle working with SDR#. This program is a bit of a Jack of all trades when it comes to SDR. With a nice GUI interface it is able to demodulate many different kinds of signals providing you a nice visualization of the power spectral density (PSD) estimate and spectrogram (also known as waterfall) of the output of your RTL-SDR. Below is a screenshot of the program running when tuned for a section of the comercial FM band:
 
-![SDR# screenshot]({filename}/images/SDR# screenshot.png)
+![SDR# screenshot]({filename}/images/SDR_sharp_screenshot.jpg)
 
 We won't play around much with this program so I won't elaborate more, but it's always nice to have around. Make sure to tune to an FM radio station you like that has a strong enough signal and write down its frequency. I will be using 97.4 MHz throughout this post, the frequency for Radio Comercial here in Lisbon, which has a particularly strong signal where I'm living.
 
@@ -55,14 +58,15 @@ It should be mentioned that, as with a lot of useful open source software, there
 
 We'll start our exploration of the rtl-sdr command tools with rtl_test. This is an utility that allows you to perform different tests on your RTL-SDR dongle and figure out the allowable ranges for some of the control parameters when capturing samples with your dongle. The following command will capture samples at 2.4 MHz and report any samples lost. You can suspend the program with Ctrl+C and it will tell you how many samples per million were lost:
 
-	:::
+	:::shell
 	$ rtl_test -s 2400000
 	Found 1 device(s):
 	  0:  Realtek, RTL2838UHIDIR, SN: 00000001
 
 	Using device 0: Generic RTL2832U OEM
 	Found Rafael Micro R820T tuner
-	Supported gain values (29): 0.0 0.9 1.4 2.7 3.7 7.7 8.7 12.5 14.4 15.7 16.6 19.7 20.7 22.9 25.4 28.0 29.7 32.8 33.8 36.4 37.2 38.6 40.2 42.1 43.4 43.9 44.5 48.0 49.6 
+	Supported gain values (29): 0.0 0.9 1.4 2.7 3.7 7.7 8.7 12.5 14.4 15.7 16.6 19.7 20.7
+	 22.9 25.4 28.0 29.7 32.8 33.8 36.4 37.2 38.6 40.2 42.1 43.4 43.9 44.5 48.0 49.6 
 	[R82XX] PLL not locked!
 	Sampling at 2400000 S/s.
 
@@ -77,7 +81,7 @@ We'll start our exploration of the rtl-sdr command tools with rtl_test. This is 
 
 As you can see it will also report all the supported values for the gain setting of the tuner (see *rtlsdr_get_tuner_gains*).  The PLL not locked message meaning that a lock was not achieved in the frequency synthesizer does not show up when running the program under windows and I'm not sure what causes it. My NooElec RTL-SDR blog dongle is not dropping any samples at 2.4 MHz. You can try different settings of the sample rate with the **-s** option within the allowable range (see *rtlsdr_set_sample_rate* above) in order to figure out a maximum safe sample rate at which no samples are dropped (typically 2.56 MHz before the RTL2832U starts dropping samples internally). For instance, trying to sample at the known "unsafe" rate of 2.7 MHz yields:
 
-	:::
+	:::shell
 	Sampling at 2700000 S/s.
 
 	Info: This tool will continuously read from the device, and report if
@@ -105,14 +109,15 @@ The tuner's local oscillator frequency can present a significant offset from rea
 Letting it run for a few minutes should give you a somewhat reliable estimate that you can then use as the frequency correction parameter for other programs such as SDR# or rtl_sdr. The following is the result of running the program with the **-p** option using my NooElec dongle directly after plugging it in (not warmed up):
 
 
-	:::
+	:::shell
 	$ rtl_test -s 2400000 -p
 	Found 1 device(s):
 	  0:  Realtek, RTL2838UHIDIR, SN: 00000001
 
 	Using device 0: Generic RTL2832U OEM
 	Found Rafael Micro R820T tuner
-	Supported gain values (29): 0.0 0.9 1.4 2.7 3.7 7.7 8.7 12.5 14.4 15.7 16.6 19.7 20.7 22.9 25.4 28.0 29.7 32.8 33.8 36.4 37.2 38.6 40.2 42.1 43.4 43.9 44.5 48.0 49.6 
+	Supported gain values (29): 0.0 0.9 1.4 2.7 3.7 7.7 8.7 12.5 14.4 15.7 16.6 19.7 20.7
+	 22.9 25.4 28.0 29.7 32.8 33.8 36.4 37.2 38.6 40.2 42.1 43.4 43.9 44.5 48.0 49.6 
 	[R82XX] PLL not locked!
 	Sampling at 2400000 S/s.
 	Reporting PPM error measurement every 10 seconds...
@@ -144,7 +149,7 @@ Letting it run for a few minutes should give you a somewhat reliable estimate th
 
 The results I get from my rtl-sdr.com dongle paint a very different picture owing to it's much more accurate 1 PPM temperature compensated oscillator. After plugging in the dongle the cumulative frequency error quickly drops to a much smaller value:
 
-	:::
+	:::shell
 	real sample rate: 2400001 current PPM: 1 cumulative PPM: 1
 	real sample rate: 2399958 current PPM: -17 cumulative PPM: -8
 	real sample rate: 2400060 current PPM: 25 cumulative PPM: 3
@@ -168,7 +173,7 @@ The results I get from my rtl-sdr.com dongle paint a very different picture owin
 	real sample rate: 2400019 current PPM: 8 cumulative PPM: 1
 	real sample rate: 2399954 current PPM: -19 cumulative PPM: 1
 	real sample rate: 2400013 current PPM: 5 cumulative PPM: 1
-	real sample rate: 2400012 current PPM: 5 cumulative PPM: 1
+<!---	real sample rate: 2400012 current PPM: 5 cumulative PPM: 1
 	real sample rate: 2400003 current PPM: 1 cumulative PPM: 1
 	real sample rate: 2400013 current PPM: 6 cumulative PPM: 1
 	real sample rate: 2400004 current PPM: 2 cumulative PPM: 1
@@ -202,7 +207,7 @@ The results I get from my rtl-sdr.com dongle paint a very different picture owin
 	real sample rate: 2400005 current PPM: 2 cumulative PPM: 1
 	real sample rate: 2400005 current PPM: 2 cumulative PPM: 1
 	real sample rate: 2400006 current PPM: 3 cumulative PPM: 1
-
+--->
 
 I should mention that I get no PPM reports from running rtl_test under windows and again I'm not sure why...
 
@@ -214,7 +219,7 @@ rtl_fm is a very resource efficient command line tool to capture IQ samples from
 
 The following command will demodulate and record a wideband FM channel at 97.4 MHz and record it in a file *comercial.raw*. You can press Ctrl+C to exit after capturing enough samples.
 
-	:::
+	:::shell
 	$ rtl_fm -M wbfm -f 97.4M -g 20 comercial.raw
 	
 The meaning of the options is:
@@ -233,7 +238,7 @@ when using -M wbfm a few implicit options are assumed (which can be explicitely 
 
 The output I get running this command and then stopping the execution after a few seconds is:
 
-	:::
+	:::shell
 	Found 1 device(s):
 	  0:  Realtek, RTL2838UHIDIR, SN: 00000001
 
@@ -253,7 +258,7 @@ You might notice that rtl_fm tuned to a different frequency (97.671 MHz) than th
 
 Notice also that the software oversamples by 6x at 1.02 MHz and then decimates the output to the (implicitely) specified frequency of 170 kHz before demodulating. This is because, first and foremost, 170 kHz is not a valid sampling frequency for the RTL-SDR (see the librtlsdr section above for the valid range). 1.02 MHz is in fact the first integer multiple of 170 kHz that fits in the allowed range. But this is not the only reason; in fact if we specifically ask rtl_fm to sample the input at 240 kHZ with **-s 240k**, it will still oversample by 5x at 1.2 MHz despite the fact that 240 MHz is within the allowed range of sampling frequencies of the RTL SDR:
 
-	:::
+	:::shell
 	Oversampling input by: 5x.
 	Oversampling output by: 1x.
 	Buffer size: 6.83ms
@@ -319,7 +324,8 @@ A more convenient format to process the data digitally is to load it as complex 
 		x = np.fromfile(filename, np.uint8) - np.float32(127.5)	#by subtracting a float32 the resulting array will also be float32
 		return 8e-3*x.view(np.complex64)						#viewing it as a complex64 array then yields the correct result
 
-##
+
+#
 
 # pyrtlsdr
 
@@ -352,16 +358,11 @@ To collect 10 seconds of data with the same characteristics as that we collected
 	#we use a context manager that automatically calls .close() on sdr
 	#whether the code block finishes successfully or an error occurs
 	#initializing a RtlSdr instance automatically calls open()
-	with closing(RtlSdr()) as sdr:
-		#use the properties of RtlSdr instance to set the 
-		#appropriate parameters
-		sdr.sample_rate = 1020000
-		sdr.center_freq = 97.4e6
-		sdr.gain = 20
-		
-		#read 10 seconds worth of samples
-		x = sdr.read_samples(10*sdr.sample_rate)
-		
+	with closing(RtlSdr()) as sdr:  
+   		sdr.sample_rate = sample_rate = 2400000
+   		sdr.center_freq = 97.4e6
+    	sdr.gain = 20
+    	iq_samples = sdr.read_samples(10*sample_rate)		
 #
 
 
@@ -372,43 +373,94 @@ Armed with our new found knowledge of how to capture IQ samples and load them in
 	:::python
 	from scipy import signal
 	from scipy.fftpack import fftshift
+	import matplotlib.pyplot as plt
 
-	f, Pxx = signal.welch(iq_samples, 2400000, detrend=lambda x: x)
+	#compute Welch estimate without detrending
+	f, Pxx = signal.welch(iq_samples, sample_rate, detrend=lambda x: x)
 	f, Pxx = fftshift(f), fftshift(Pxx)
-
+	
 	plt.semilogy(f/1e3, Pxx)
 	plt.xlabel('f [kHz]')
 	plt.ylabel('PSD [Power/Hz]')
+	plt.grid()
+	
+	plt.xticks(np.linspace(-sample_rate/2e3, sample_rate/2e3, 7))
+	plt.xlim(-sample_rate/2e3, sample_rate/2e3)
 
 ![Whole spectrum]({filename}/images/pwelch_whole.png)
 
-The first thing you should notice is that we massively oversampled the FM signal. Recall that at a sample rate of 2.4 MHz we're seeing a portion of the spectrum ranging from 97.4 MHz +- 1.2 MHz. The bandwidth of a comercial FM radio station however is usually around 200 kHz and the two peaks to the left and right of the main one are actually 2 different stations with a weaker signal.
+The first thing you should notice is that I have massively oversampled the FM signal. Recall that at a sample rate of 2.4 MHz we're seeing a portion of the spectrum ranging from 97.4 MHz +- 1.2 MHz. The bandwidth of a comercial FM radio station however is usually around 200 kHz and the two peaks to the left and right of the main one are actually 2 different stations with a weaker signal.
 
-Oversampling the signal we want has an advantage which I touched upon in the rtl_fm section but I'll reiterate here. Because the RTL-SDR ADC is 8 bit there will be significant quantization noise and oversampling and decimating in software where the 8-bit limitation doesn't hold should yield a better SNR figure. I assume that this is the reason that SDR# also samples at 2.4 MHz by default when listening to FM.
+Oversampling the signal we want has an advantage which I touched upon in the rtl_fm section but I'll reiterate here. Because the RTL-SDR ADC is 8 bit there will be significant quantization noise. Oversampling and decimating in software where the 8-bit limitation doesn't exist should yield a better SNR figure. I assume that this is the reason that SDR# also samples at 2.4 MHz by default when listening to FM.
 
-As to the other stations, we could have gotten rid of them by setting our IF filter bandwidth smaller. It was automatically set by the driver at 2.4 MHz when we set the sample rate and I chose not to set it lower because I wanted these other signals to show up in order to illustrate a point further along. Adjusting your IF filter to the bandwidth of the signal you're interested in when oversampling is probably a good idea though since more selectivity is always good.
+As to the other stations, we could have gotten rid of them by setting our IF filter bandwidth smaller. It was automatically set by the driver at 2.4 MHz when we set the sample rate and I chose not to manually set it lower because I wanted these other signals to show up in order to illustrate a point further along. Adjusting your IF filter to the bandwidth of the signal you're interested in when oversampling is probably a good idea since more selectivity is always good.
 
-We're now ready to decimate the signal down to a more manageable rate of 200 kHz which is roughly the bandwidth of the signal we're interested. We'll let the decimation filter take care of the unwanted stations and noise:
+We're now ready to decimate the signal down to a more manageable rate of 240 kHz which is a bit more than the bandwidth of the signal we're interested in but makes the decimation math simpler. We'll let the decimation filter take care of the unwanted stations and out of band noise:
 
 	:::python
-	iq_comercial = signal.decimate(iq_samples, 2400000//200000)
+	sample_rate_fm = 240000 				      #decimate by 10
+	iq_comercial = signal.decimate(iq_samples, sample_rate//sample_rate_fm)
 
-As you can see the PSD estimate now contains only the signal of interest, FM station radio comercial:
+As you can see the PSD estimate now contains only the signal of interest which is the broadcast by FM station Rádio Comercial:
 
 ![Comercial spectrum]({filename}/images/pwelch_comercial.png)
 
-We can now proceed with the demodulation.
+We can now proceed with the demodulation. Going back to the [section on FM modulation]({filename}./RTL-SDR Hardware.md#Frequency Demodulation) of the first part of this introduction we find that in order to demodulate an FM signal from it's complex baseband representation, it suffices to differentiate the angle of the signal:
+
+$$\frac{\text{d}\angle s_b(t)}{\text{d}t} = 2\pi f_\Delta m(t)$$
+
+In discrete-time this can be accomplished through a differentiating FIR filter. For the sake of simplicity we'll use the simple forward difference $\left(1-q^{-1}\right)$ through numpy's _diff_ function:
 
 	:::python
+	angle_comercial = np.unwrap(np.angle(iq_comercial))
+	demodulated_comercial = np.diff(angle_comercial)
 	
+We unwrap the result of the angle function to remove $2\pi$ discontinuities. Differentiating this angle then yields the desired result with one caveat, the sample rate of the signal is too high for the typical sound card (and effectivelly our ears which in the best of cases can pick up to 20 kHz). A further decimation is thus necessary to bring the signal down to a sample rate that our sound cards can reproduce. 48 kHz is a good value for this as it is supported by most sound cards:
 
-The interesting thing about SDR is that we can do anything with 
+	:::python
+	audio_rate = 48000
+	audio_comercial = signal.decimate(demodulated_comercial, \
+		sample_rate_fm//audio_rate, zero_phase=True)
+	
+The following is the final result after converting to a 16-bit per sample wav file (for the sake of some compression since 16-bit is more than necessary for a decent audio quality):
 
-[DSP Tricks](http://www.embedded.com/design/configurable-systems/4212086/DSP-Tricks--Frequency-demodulation-algorithms-)
+	:::python
+	audio_comercial = np.int16(1e4*audio_comercial)
+	wavfile.write("comercial_demodulated.wav", rate=audio_rate, data=audio_comercial)
+	
+{% audio {filename}/audio/comercial_demodulated.wav %}
 
-# GNURadio
+	
+## Tuning to a Different Station
 
-sds
+The interesting thing about SDR is that we can do anything with the captured signal. Since we oversampled the signal so much that we actually picked up additional FM broadcasts we can tune into these in software and see if they yield something more interesting.
+
+Recall that multiplying by a complex sinusoid correspondes to circularly shifting the spectrum of the digital signal by that sinusoid's frequency:
+
+$$e^{j\omega_0n}x[n]\stackrel{\mathrm{DFT}}{\longleftrightarrow}X\left(e^{j(\omega+\omega_0)}\right)
+$$
+
+We can use this to center the station 800 kHz to the left of Rádio Comercial which is the frequency for Smooth FM (96.6 MHz). All we need to do is multiply our complex baseband samples by $e^{j\frac{2\pi}{3}n}$ since $1/3$ is the required normalized frequency ($\frac{800\;kHz}{f_s}$):
+
+	:::python 
+	f_shift = 800000
+	iq_shifted = iq_samples*\
+		np.exp(1j*2*np.pi*f_shift/sample_rate*np.arange(len(iq_samples)))
+	
+We can then decimate the resulting signal in order to obtain the complex baseband representation of the FM broadcast of Smooth FM in the same fashion as we did for Rádio Comercial. The PSD estimate of the 3 signals is depicted next for comparison:
+
+![Comercial spectrum]({filename}/images/pwelch_smooth.png)
+
+Demodulation can then be done in the same way yielding the following result:
+
+{% audio {filename}/audio/smooth_demodulated.wav %}
+
+We can see that this example is a bit noisier owing to the roughly 100-fold less power of the received signal. However it's pretty much still audible which only speaks to the frequency modulation's noise tolerance.
+
+What we've done here is essentially another digital downconversion similar to the one done inside the RTL2832U to get from IF to baseband. We now know how to easily perform these frequency shifts in software and the same principle can be applied for different purposes such as performing a frequency correction directly in software or tuning the RTL-SDR a bit off-frequency to avoid a possible DC spike and then correct for this in software like rtl_fm does.
+
+
+<!---[DSP Tricks](http://www.embedded.com/design/configurable-systems/4212086/DSP-Tricks--Frequency-demodulation-algorithms-)--->
 
 # Up Next
 

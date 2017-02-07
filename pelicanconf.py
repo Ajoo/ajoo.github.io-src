@@ -19,7 +19,7 @@ DEFAULT_LANG = 'English'
 PATH = 'content'
 
 DEFAULT_CATEGORY = 'General'
-STATIC_PATHS = ['images', 'audio']
+STATIC_PATHS = ['images', 'external_images', 'audio']
 TYPOGRIFY = True
 PLUGIN_PATHS = ['plugins']
 PLUGINS = ['render_math', 'liquid_tags.img', 'liquid_tags.fig', 'liquid_tags.audio', 'liquid_tags.include_code']
@@ -31,11 +31,10 @@ TRANSLATION_FEED_ATOM = None
 AUTHOR_FEED_ATOM = None
 AUTHOR_FEED_RSS = None
 
-LINKS = (('email', 'mailto:ajoo@outlook.pt'),
-		  ('kaggle', 'https://www.kaggle.com/ajoo88'))
+LINKS = tuple()
 
 # Social widget
-SOCIAL = (('github', 'https://github.com/Ajoo'),)
+SOCIAL = (('github', 'https://github.com/Ajoo'),('email', 'mailto:ajoo@outlook.pt'))
 		  
 
 DEFAULT_PAGINATION = 10

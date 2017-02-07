@@ -12,9 +12,12 @@ https://c2.staticflickr.com/4/3546/4599500082_93203ec261.jpg
 "A vintage K.W. Vanguard radio. An iconic piece of equipment from a previous era of amateur radio enthusiasts. Image by Derek via"
 https://www.flickr.com/photos/xenoc/4599500082/ Flickr %} -->
 
-{% img {filename}/images/radio-1547786.png 500 "https://pixabay.com/pt/r%C3%A1dio-r%C3%A1dio-tubos-receptor-tubo-1547786/" "Old FM radio" %}
+{% sourced_fig {filename}/external_images/nesdr_mini_2.png 500 
+"NooElec RTL-SDR"
+"NooElec RTL-SDR USB dongle."
+http://www.nooelec.com/store/sdr/sdr-receivers/nesdr-mini-rtl2832-r820t.html %}
 
-The purpose of this two-part blog post is to introduce a piece of equipment which is quickly becoming a centerpiece of the modern radio enthusiast's toolbox. A cheap and powerful device that allows one to digitally sample the electromagnetic spectrum at a wide range of frequencies and is breathing new life into the amateur radio (HAM) community.
+The purpose of this two-part blog post is to introduce a small piece of equipment that is quickly becoming a staple of the modern radiofrequency enthusiast's toolbox. A cheap and powerful device that allows one to digitally sample the electromagnetic spectrum at a wide range of frequencies and get the samples delivered to a personal computer via a convenient USB interface.
 
 Initially this two-part introduction to RTL-SDR was meant as a single blog post. I intended to first go through the theory and working principles of the hardware and then move on to the software that I plan to use in future RTL-SDR projects. Finally, I intended to use this software to implement a simple FM demodulator in order to illustrate my points through a practical application.
 
@@ -161,11 +164,6 @@ The dongle that you see at the bottom is the one sold by the [RTL-SDR blog](http
 
 ## The innards of RTL2832U based DVB-T TV USB dongles
 
-{% sourced_fig {filename}/images/RTL_dongle_inside.png 
-'RTL dongle inside'
-'RTL-SDR blog USB dongle opened up.'
-http://www.rtl-sdr.com/buy-rtl-sdr-dvb-t-dongles/ %}
-
 The overall architecture of RTL-SDR dongles is based on a [superheterodyne receiver](https://en.wikipedia.org/wiki/Superheterodyne_receiver) which is a popular design for receivers that must be able to process signals at a wide range of user-selected frequencies, isolating them from other signals and amplifying them. Examples are many conventional AM/FM radio receivers where the user selects a channel by tuning the radio to it's carrier wave frequency.
 
 A selective enough filter must be applied to the signal coming from the antenna in order to filter out other signals and noise outside the band of interest before demodulation. For the purpose described above it must also have a tunable center-frequency which makes its practical implementation troublesome. Superheterodyne architectures solve this by downconverting first to an **intermediate frequency** (IF) in which more rigorous filtering and amplification stages can be applied now that the signal is at a fixed pre-specified frequency (see the figure below for a typical setup).
@@ -184,6 +182,11 @@ In the RTL-SDR dongles the signal is sampled at a low intermediate frequency aft
 
 * **Tuner**: The RF front-end which implements the analog signal processing part of the receiver and is responsible for the downconversion into the intermediate frequency;
 * **The RTL2832U**: Samples the signal and performs additional digital signal processing tasks such as decimation. Also handles USB control.
+
+{% sourced_fig {filename}/external_images/nesdr_mini_pcb_annotated.jpg 500 
+"NooElec RTL-SDR PCB"
+"NooElec RTL-SDR dongle opened up."
+http://www.nooelec.com/store/sdr/sdr-receivers/nesdr-mini-rtl2832-r820t.html %}
 
 The following sections will go into details about the function of each of these important components. Information from these sections is gathered from multiple sources including the [Osmocom driver's source code](https://github.com/steve-m/librtlsdr). [Superkuh's website](http://superkuh.com/rtlsdr.html) deserves a special mention as it is a veritable treasure cove for anything RTL-SDR related.
 
@@ -222,7 +225,7 @@ The following high-level diagram represents my best understanding of the functio
 
 Initially, the signal coming out of the tuner is sampled by an 8-bit ADC running at 28.8 MHz. No significant aliasing should occur for the low IF values supported if the IF filter is selective enough to kill any strong signals outside its bandwidth.
 
-A [digital downconverter](https://en.wikipedia.org/wiki/Digital_down_converter) (DDC) is then responsible for downconverting the digital signal to complex baseband. The process of obtaining the complex baseband representation is the same as for the continuous-time case: mixing with two digital sinusoids in quadrature with each other and low pass filtering. The signal can then be resampled without loss of information since the baseband signal will be band-limited by a lower frequency as was explained in the previous section on complex baseband representation. External configuration parameters inform the DDC of the IF frequency and whether the spectrum is inverted (i.e., if the tuner is high-side injecting).
+A [digital downconverter](https://en.wikipedia.org/wiki/Digital_down_converter) (DDC) is then responsible for downconverting the digital signal to complex baseband. The process of obtaining the complex baseband representation is similar to the continuous-time case: mixing with a complex sinusoid will circularly shift the spectrum from IF down to baseband. The signal can then be low pass-filtered and downsampled to get rid of the unnecessary part of the spectrum that was shifted to higher frequencies since the signal of interest is now band-limited by a lower frequency. External configuration parameters inform the DDC of the IF frequency and whether the spectrum is inverted (i.e., if the tuner is high-side injecting).
 
 Finally decimation (using a FIR low pass filter and downsampling) is applied in order to reduce the sample rate of the signal to a value in the range [225001; 300000] Hz ∪ [900001; 3200000] Hz. 2.56 MHz is however the generally agreed upon highest safe sample rate where no samples will be dropped by the chip (they may still be dropped by the USB). This decimation is what usually sets the upper limit on the bandwidth of the sampled signal (unless the IF filter bandwidth is specifically chosen as lower than the Nyquist frequency for the sample rate).
 
