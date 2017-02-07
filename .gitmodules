@@ -4,3 +4,6 @@
 [submodule "themes/pelican-blueidea"]
 	path = themes/pelican-blueidea
 	url = git@github.com:Ajoo/pelican-blueidea.git
+[submodule "notebooks"]
+	path = notebooks
+	url = git@github.com:Ajoo/blog-notebooks.git
