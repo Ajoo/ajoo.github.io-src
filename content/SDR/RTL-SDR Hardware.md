@@ -6,20 +6,12 @@ Tags: RTL-SDR, DSP
 Summary: A summary of what I've learned about RTL-SDR so far. From the working principles of the USB dongles to the software I intend to use to capture and process the data for future projects.
 Status: published
 
-<!-- {% sourced_fig
-https://c2.staticflickr.com/4/3546/4599500082_93203ec261.jpg
-"K.W. Vanguard radio"
-"A vintage K.W. Vanguard radio. An iconic piece of equipment from a previous era of amateur radio enthusiasts. Image by Derek via"
-https://www.flickr.com/photos/xenoc/4599500082/ Flickr %} -->
-
 {% sourced_fig {filename}/external_images/nesdr_mini_2.png 500 
 "NooElec RTL-SDR"
 "NooElec RTL-SDR USB dongle."
 http://www.nooelec.com/store/sdr/sdr-receivers/nesdr-mini-rtl2832-r820t.html %}
 
-The purpose of this two-part blog post is to introduce a small piece of equipment that is quickly becoming a staple of the modern radiofrequency enthusiast's toolbox. A cheap and powerful device that allows one to digitally sample the electromagnetic spectrum at a wide range of frequencies and get the samples delivered to a personal computer via a convenient USB interface.
-
-Initially this two-part introduction to RTL-SDR was meant as a single blog post. I intended to first go through the theory and working principles of the hardware and then move on to the software that I plan to use in future RTL-SDR projects. Finally, I intended to use this software to implement a simple FM demodulator in order to illustrate my points through a practical application.
+The purpose of this article is to introduce a small and cheap device that is quickly becoming a staple of the modern radiofrequency enthusiast's toolbox. Initially this two-part introduction to RTL-SDR was meant as a single blog post. I intended to first go through the theory and working principles of the hardware and then move on to the software that I plan to use in future RTL-SDR projects. Finally, I intended to use this software to implement a simple FM demodulator in order to illustrate my points through a practical application.
 
 The more I researched this topic however, the more things I found that I wanted to write about here and this post eventually grew to be too lengthy for a single serving. I wanted this first article to be quite in depth, especially regarding the inner workings of RTL-SDR dongles because I wanted to have a single point to refer back to on this matter, both for my sake and that of any readers out there.
 

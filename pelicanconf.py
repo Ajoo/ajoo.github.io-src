@@ -9,7 +9,7 @@ sys.path.append(os.curdir)
 from themeconf import *
 
 AUTHOR = 'Ajoo'
-SITENAME = 'Wintermute Dev Logs'
+SITENAME = "Ajoo's Blog"
 SITEURL = ''
 #GITHUB_URL = 'https://github.com/Ajoo/ajoo.github.io-src'
 

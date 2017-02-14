@@ -1,4 +1,4 @@
-Title: Intro to RTL-SDR - Part II
+Title: Intro to RTL-SDR, Part II - Software
 Date: 2017-02-07 13:00
 Category: SDR
 Tags: RTL-SDR, Python, DSP
@@ -256,7 +256,7 @@ The output I get running this command and then stopping the execution after a fe
 
 You might notice that rtl_fm tuned to a different frequency (97.671 MHz) than that we specified (97.4 MHz). This is done to avoid the DC bias that is present in dongles with Zero-IF tuners such as the e4000. This way the dongle is tuned to a slightly different frequency in order to avoid the DC spike and the software later corrects for this in the digital signal processing by shifting the captured signal in frequency to 0 Hz. While this shouldn't be necessary for R820T tuners one might argue that it's still justified in case there is any significant flicker noise (1/f psd) or higher power law noises present at the output.
 
-Notice also that the software oversamples by 6x at 1.02 MHz and then decimates the output to the (implicitely) specified frequency of 170 kHz before demodulating. This is because, first and foremost, 170 kHz is not a valid sampling frequency for the RTL-SDR (see the librtlsdr section above for the valid range). 1.02 MHz is in fact the first integer multiple of 170 kHz that fits in the allowed range. But this is not the only reason; in fact if we specifically ask rtl_fm to sample the input at 240 kHZ with **-s 240k**, it will still oversample by 5x at 1.2 MHz despite the fact that 240 MHz is within the allowed range of sampling frequencies of the RTL SDR:
+Notice also that the software oversamples by 6x at 1.02 MHz and then decimates the output to the (implicitely) specified frequency of 170 kHz before demodulating. This is because, first and foremost, 170 kHz is not a valid sampling frequency for the RTL-SDR (see the librtlsdr section above for the valid range). 1.02 MHz is in fact the first integer multiple of 170 kHz that fits in the allowed range. But this is not the only reason; in fact if we specifically ask rtl_fm to sample the input at 240 kHz with **-s 240k**, it will still oversample by 5x at 1.2 MHz despite the fact that 240 kHz is within the allowed range of sampling frequencies of the RTL SDR:
 
 	:::shell
 	Oversampling input by: 5x.
